@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block body_content %}
+
+  <div class="flex justify-center items-center min-h-screen">
+
+    <div class="flex items-center p-2 lg:p-4 text-lg lg:text-3xl text-red-400 bg-red-100 border border-red-300 rounded font-bold tracking-tighter gap-4">
+      <span>Vous ne devriez pas être là !</span>
+      <div>
+        <a href="/" class="btn btn-error">
+          <i data-lucide="undo-2"></i>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+{% endblock %}

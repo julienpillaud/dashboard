@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block body_content %}
+
+  <div class="flex justify-center items-center min-h-screen bg-base-200">
+    <form method="post">
+      <div class="card bg-base-100 w-sm shadow-xs rounded-xs">
+        <div class="card-body">
+
+          <input type="text" class="input w-full" name="username" placeholder="Magasin" required/>
+          <input type="password" class="input w-full" name="password" placeholder="Mot de passe" required/>
+
+          {% if error %}
+            <div role="alert" class="alert alert-error alert-soft">
+              <i class="bi bi-x-circle"></i>
+              <span>{{ error }}</span>
+            </div>
+          {% endif %}
+
+          <button type="submit" class="btn btn-soft">Connexion</button>
+
+        </div>
+      </div>
+    </form>
+  </div>
+
+{% endblock %}

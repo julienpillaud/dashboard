@@ -1,0 +1,121 @@
+{% extends "dashboard.html" %}
+{% block page_content %}
+
+  <main
+    class="flex flex-col max-w-4xl mx-auto p-4"
+    x-data="articleManager"
+  >
+    <div class="flex flex-col bg-base-200 sticky top-16 gap-2 pb-2">
+      <!-- ------------------------------------------------------------------- -->
+      <div class="flex items-center bg-base-100 shadow-xs rounded-xs p-4">
+        <span class="text-xl font-semibold">Articles</span>
+        <span
+          class="text-sm rounded-sm font-bold px-2 py-0.5 ml-3 bg-indigo-50 text-indigo-600 border border-indigo-200"
+          x-show="total > 0"
+          x-text="search.trim() ? `${filteredTotal} / ${total}` : total">
+        </span>
+        <button class="btn ml-auto" @click="synchronizeArticles()">Synchroniser</button>
+      </div>
+      <!-- ------------------------------------------------------------------- -->
+      <!-- Search -->
+      <div class="flex items-center bg-base-100 shadow-xs rounded-xs p-4 gap-4">
+        <i data-lucide="search" class="text-base-content/40"></i>
+        <input
+          type="text"
+          placeholder="Rechercher..."
+          class="w-full border-none focus:outline-none"
+          x-model="search"
+          @input="resetLimit()"
+        />
+        <button
+          x-show="search.length > 0"
+          @click="search = ''; resetLimit()"
+          class="cursor-pointer"
+        >
+          <i data-lucide="x" class="text-base-content/40"></i>
+        </button>
+      </div>
+    </div>
+    <!-- ------------------------------------------------------------------- -->
+    <!-- Articles list -->
+    <div class="bg-base-100 p-4 gap-4 flex flex-col min-h-0 flex-1 shadow-xs rounded-xs overflow-y-auto">
+      <!-- ----------------------------------------------------------------- -->
+      <template x-if="filteredTotal > 0">
+        <ul class="flex flex-col divide-y divide-gray-200">
+          <template x-for="article in filteredArticles" :key="article.id">
+            <li class="flex items-center p-2 gap-4">
+              <!-- ----------------------------------------------------------- -->
+              <!-- Icon text -->
+              <span
+                class="w-10 h-10 border rounded-md flex items-center justify-center text-sm font-bold"
+                :style="{
+                backgroundColor: article.raw.color + '10',
+                borderColor: article.raw.color + '40',
+                color: article.raw.color
+              }"
+                x-text="article.raw.icon_text"
+              >
+            </span>
+              <!-- ----------------------------------------------------------- -->
+              <!-- Name -->
+              <div class="flex-1 min-w-0">
+                <span
+                  class="text-base text-gray-900 truncate block"
+                  x-text="article.raw.name"
+                >
+                </span>
+              </div>
+              <!-- ----------------------------------------------------------- -->
+              <div class="flex items-center gap-4 shrink-0">
+              <span
+                class="inline-flex items-center px-2 py-0.5 text-sm rounded-sm font-bold bg-indigo-50 text-indigo-600 border border-indigo-200"
+                x-text="article.category"
+              >
+              </span>
+                <span
+                  class="inline-flex items-center px-2 py-0.5 text-sm rounded-sm font-bold border"
+                  :class="{
+                    'bg-emerald-50 text-emerald-600 border-emerald-200': article.raw.stock_quantity > 0,
+                    'bg-amber-50 text-amber-600 border-amber-200': article.raw.stock_quantity == 0,
+                    'bg-rose-50 text-rose-600 border-rose-200': article.raw.stock_quantity < 0
+                  }"
+                  x-text="article.raw.stock_quantity"
+                >
+              </span>
+                <div class="flex flex-col items-end w-20 gap-0.5">
+                <span
+                  class="text-lg font-bold text-gray-900 tabular-nums tracking-tight"
+                  x-text="Number(article.raw.full_price).toLocaleString('fr-FR') + ' €'"
+                >
+                </span>
+                  <span
+                    class="text-[10px] font-medium text-gray-500 bg-gray-50 border border-gray-200 rounded-sm px-1 py-0.2"
+                    x-text="article.tax_rate + ' %'"
+                  >
+                </span>
+                </div>
+              </div>
+              <!-- ----------------------------------------------------------- -->
+            </li>
+          </template>
+        </ul>
+      </template>
+      <!-- ----------------------------------------------------------------- -->
+      <div x-show="filteredArticles.length >= limit">
+        <button @click="loadMore()" class="btn btn-dash border-base-300 btn-block">
+          Afficher plus...
+        </button>
+      </div>
+      <!-- ----------------------------------------------------------------- -->
+      <div
+        class="text-center py-2 text-sm rounded-sm bg-yellow-50 text-yellow-600 border border-yellow-200"
+        x-show="filteredTotal === 0 && total > 0"
+      >
+        <span>Aucun article trouvé</span>
+      </div>
+      <!-- ----------------------------------------------------------------- -->
+    </div>
+    <!-- ------------------------------------------------------------------- -->
+  </main>
+
+{% endblock %}

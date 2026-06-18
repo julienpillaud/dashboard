@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block body_content %}
+
+  <div class="min-h-screen bg-base-200">
+
+    <div class="navbar bg-base-100 shadow-xs sticky top-0">
+      <div class="flex items-center gap-2 px-2">
+        <i data-lucide="store"></i>
+        <span class="text-xl font-semibold">{{ current_store.name }}</span>
+      </div>
+    </div>
+
+    {% block page_content %}{% endblock %}
+
+  </div>
+
+{% endblock %}
