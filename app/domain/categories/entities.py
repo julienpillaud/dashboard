@@ -11,5 +11,4 @@ class RawCategory(BaseRawEntity):
 
 class Category(BaseEntity):
     store_id: EntityId
-    external_id: str
     raw: RawCategory

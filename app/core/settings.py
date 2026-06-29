@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     secret_key: str
     http_client_timeout: int = 10
 
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    access_token_expire: int
+
     mongo_user: str
     mongo_password: str
     mongo_host: str

@@ -6,6 +6,7 @@ from app.api.articles.router import router as articles_router
 from app.api.auth.router import router as auth_router
 from app.api.categories.router import router as categories_router
 from app.api.exceptions import add_exception_handlers
+from app.api.inventories.router import router as inventories_router
 from app.api.lifespan import lifespan_factory
 from app.api.taxes.router import router as taxes_router
 from app.core.settings import Settings
@@ -16,6 +17,7 @@ def create_fastapi_app(settings: Settings) -> FastAPI:
         swagger_ui_parameters={
             "tryItOutEnabled": True,
             "displayRequestDuration": True,
+            "persistAuthorization": True,
         },
         lifespan=lifespan_factory(settings=settings),
     )
@@ -29,8 +31,9 @@ def create_fastapi_app(settings: Settings) -> FastAPI:
     )
 
     app.include_router(auth_router)
+    app.include_router(taxes_router)
     app.include_router(categories_router)
     app.include_router(articles_router)
-    app.include_router(taxes_router)
+    app.include_router(inventories_router)
 
     return app

@@ -1,17 +1,33 @@
 const INITIAL_LIMIT = 50;
 
+
+const fetchApi = async (url) => {
+  const response = await fetch(url);
+  return await response.json();
+}
+
+
 document.addEventListener("alpine:init", () => {
   Alpine.data("articleManager", () => ({
     articles: [],
+    selectedArticle: {},
+    categories: [],
+    taxes: [],
     total: 0,
     search: "",
     limit: INITIAL_LIMIT,
 
     async init() {
-      const response = await fetch("/api/articles");
-      const result = await response.json();
-      this.articles = result.items;
-      this.total = result.total;
+      const [articlesData, categoriesData, taxesData] = await Promise.all([
+        fetchApi("/api/articles?store=pessac&size=3000"),
+        fetchApi("/api/categories"),
+        fetchApi("/api/taxes")
+      ]);
+      this.articles = articlesData.items;
+      this.total = articlesData.total;
+      this.categories = categoriesData.items;
+      this.taxes = taxesData.items;
+      console.log(this.taxes);
     },
 
     resetLimit() {
@@ -41,6 +57,12 @@ document.addEventListener("alpine:init", () => {
 
     get filteredTotal() {
       return this.allFiltered.length;
+    },
+
+    openEditModal(article) {
+      // Create a deep copy
+      this.selectedArticle = JSON.parse(JSON.stringify(article));
+      this.$dispatch('open-modal');
     },
 
     async synchronizeArticles() {

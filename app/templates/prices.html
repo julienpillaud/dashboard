@@ -1,0 +1,72 @@
+<div class="bg-base-100 shadow-xs rounded-xs p-4 grid grid-cols-2 gap-2">
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Prix d'achat HT</legend>
+    <input
+      type="number"
+      step="0.01"
+      class="input w-full"
+      x-model.debounce.300ms="selectedArticle.raw.purchase_price"
+      @input="calculateFromPurchasePrice()"
+      required
+    />
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">TVA</legend>
+    <select
+      class="select w-full"
+      x-model="selectedArticle.tax_rate"
+      @change="calculateFromPurchasePrice()"
+      required
+    >
+      <option disabled></option>
+      <template x-for="tax in taxes" :key="tax.id">
+        <option :value="tax.raw.rate" x-text="tax.raw.rate + ' %'"></option>
+      </template>
+    </select>
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">PVC</legend>
+    <input
+      type="number"
+      class="input w-full bg-base-200 pointer-events-none"
+      x-model="selectedArticle.raw.recommended_price"
+      readonly
+    />
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Prix de vente TTC (€)</legend>
+    <input
+      type="number"
+      step="0.01"
+      class="input w-full"
+      x-model.debounce.300ms="selectedArticle.raw.full_price"
+      @input="calculateFromSellingPrice()"
+      required
+    />
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Montant Marge (€)</legend>
+    <input
+      type="number"
+      class="input w-full bg-base-200 pointer-events-none"
+      x-model="selectedArticle.raw.margin_amount"
+      readonly
+    />
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Taux de Marge (%)</legend>
+    <input
+      type="text"
+      class="input w-full bg-base-200 pointer-events-none"
+      x-model="selectedArticle.raw.margin_rate"
+      readonly
+    />
+  </fieldset>
+
+</div>
