@@ -15,6 +15,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "httpx2==2.5.0",
     "mypy==2.1.0",
     "pytest==9.1.1",
     "ruff==0.15.20",
@@ -57,7 +58,7 @@ disable_error_code = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
-    "skip_on_ci",
+    "local_test",
 ]
 log_cli = true
 log_cli_level = "info"
