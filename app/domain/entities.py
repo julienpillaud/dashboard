@@ -1,7 +1,10 @@
 import datetime
+from decimal import Decimal
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel
+from pydantic import AfterValidator, BaseModel, PlainSerializer
+
+DecimalType = Annotated[Decimal, PlainSerializer(float)]
 
 
 def normalize_datetime(dt: datetime.datetime) -> datetime.datetime:

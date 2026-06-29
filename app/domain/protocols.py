@@ -11,7 +11,6 @@ from cleanstack import (
 
 from app.domain.articles.entities import RawArticle
 from app.domain.categories.entities import RawCategory
-from app.domain.stores.entities import Store
 from app.domain.taxes.entities import RawTax
 
 
@@ -36,24 +35,18 @@ class RepositoryProtocol[T: BaseEntity](Protocol):
 class POSManagerProtocol(Protocol):
     async def get_taxes(
         self,
-        current_store: Store,
-        /,
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawTax]: ...
 
     async def get_categories(
         self,
-        current_store: Store,
-        /,
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawCategory]: ...
 
     async def get_articles(
         self,
-        current_store: Store,
-        /,
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawArticle]: ...

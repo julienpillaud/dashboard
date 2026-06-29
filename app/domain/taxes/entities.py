@@ -10,5 +10,4 @@ class RawTax(BaseRawEntity):
 
 class Tax(BaseEntity):
     store_id: EntityId
-    external_id: str
     raw: RawTax

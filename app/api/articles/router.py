@@ -1,47 +1,42 @@
 from typing import Annotated
 
-from cleanstack import PaginatedResponse
+from cleanstack import FilterEntity, PaginatedResponse, Pagination
 from fastapi import APIRouter, Depends
 
-from app.api.dependencies import get_current_store, get_domain
+from app.api.dependencies import get_current_user, get_domain
+from app.api.filters import get_filters
 from app.core.domain import Domain
 from app.domain.articles.commands import (
     get_articles_command,
-    get_raw_articles_command,
     synchronize_articles_command,
 )
-from app.domain.articles.entities import Article, RawArticle
-from app.domain.stores.entities import Store
+from app.domain.articles.entities import Article
 
-router = APIRouter(prefix="/api/articles", tags=["Articles"])
-
-
-@router.get("/raw", response_model=list[RawArticle])
-async def get_raw_articles(
-    current_store: Annotated[Store, Depends(get_current_store)],
-    domain: Annotated[Domain, Depends(get_domain)],
-    limit: int = 100,
-    skip: int = 0,
-) -> list[RawArticle]:
-    return await domain.run(
-        get_raw_articles_command,
-        current_store,
-        limit=limit,
-        skip=skip,
-    )
+router = APIRouter(
+    prefix="/api/articles",
+    tags=["Articles"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
-@router.get("", response_model=PaginatedResponse[Article])
+@router.get("")
 async def get_articles(
-    current_store: Annotated[Store, Depends(get_current_store)],
     domain: Annotated[Domain, Depends(get_domain)],
+    filters: Annotated[list[FilterEntity], Depends(get_filters)],
+    pagination: Annotated[Pagination, Depends()],
+    store: str | None = None,
 ) -> PaginatedResponse[Article]:
-    return await domain.run(get_articles_command, current_store)
+    return await domain.run(
+        get_articles_command,
+        store_slug=store,
+        filters=filters,
+        pagination=pagination,
+    )
 
 
 @router.post("/synchronize")
 async def synchronize_articles(
-    current_store: Annotated[Store, Depends(get_current_store)],
     domain: Annotated[Domain, Depends(get_domain)],
+    store: str,
 ) -> None:
-    await domain.run(synchronize_articles_command, current_store)
+    await domain.run(synchronize_articles_command, store_slug=store)

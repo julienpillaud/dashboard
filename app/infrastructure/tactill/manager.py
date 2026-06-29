@@ -3,7 +3,6 @@ from tactill import AsyncTactillClient, FilterEntity, FilterOperator
 from app.domain.articles.entities import RawArticle
 from app.domain.categories.entities import RawCategory
 from app.domain.protocols import POSManagerProtocol
-from app.domain.stores.entities import Store
 from app.domain.taxes.entities import RawTax
 from app.infrastructure.tactill.data import CATEGORIES
 
@@ -11,32 +10,20 @@ from app.infrastructure.tactill.data import CATEGORIES
 class TactillManager(POSManagerProtocol):
     def __init__(self, client: AsyncTactillClient) -> None:
         self.client = client
-        self._is_authenticated = False
-
-    def authenticate(self, store: Store, /) -> None:
-        if not self._is_authenticated:
-            self.client.bind(api_key=store.tactill_api_key)
-            self._is_authenticated = True
 
     async def get_taxes(
         self,
-        current_store: Store,
-        /,
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawTax]:
-        self.authenticate(current_store)
         taxes = await self.client.taxes.get_all(limit=limit, skip=skip)
         return [RawTax.model_validate(tax.model_dump()) for tax in taxes]
 
     async def get_categories(
         self,
-        current_store: Store,
-        /,
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawCategory]:
-        self.authenticate(current_store)
         categories = await self.client.categories.get_all(
             limit=limit,
             skip=skip,
@@ -54,13 +41,10 @@ class TactillManager(POSManagerProtocol):
 
     async def get_articles(
         self,
-        current_store: Store,
-        /,
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawArticle]:
-        self.authenticate(current_store)
-        categories = await self.get_categories(current_store)
+        categories = await self.get_categories()
         category_ids = [category.id for category in categories]
         articles = await self.client.articles.get_all(
             limit=limit,
