@@ -14,8 +14,10 @@ from app.core.context import Context, ContextFactory
 from app.core.domain import Domain
 from app.core.settings import Settings
 from app.domain.exceptions import NotFoundError
+from app.domain.protocols import PDFConverterProtocol
 from app.domain.users.commands import get_user_command
 from app.domain.users.entities import UserExternal
+from app.infrastructure.gotenberg.converter import GotenbergPDFConverter
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 cookie_scheme = APIKeyCookie(name="access_token", auto_error=False)
@@ -23,7 +25,7 @@ cookie_scheme = APIKeyCookie(name="access_token", auto_error=False)
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()  # ty:ignore[missing-argument]
+    return Settings()
 
 
 @lru_cache
@@ -84,6 +86,17 @@ async def _get_current_user(
         return await domain.run(get_user_command, user_id=access_payload.sub)
     except InvalidAccessToken, NotFoundError:
         return None
+
+
+def get_pdf_converter(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> PDFConverterProtocol:
+    http_client = request.app.state.http_client
+    return GotenbergPDFConverter(
+        client=http_client,
+        host=settings.gotenberg_host,
+    )
 
 
 def get_context_factory(

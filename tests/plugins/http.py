@@ -14,7 +14,7 @@ from app.core.settings import Settings
 
 @pytest.fixture(scope="session")
 def settings() -> Settings:
-    return Settings()  # ty:ignore[missing-argument]
+    return Settings()
 
 
 @pytest.fixture(scope="session")

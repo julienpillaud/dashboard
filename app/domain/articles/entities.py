@@ -83,35 +83,3 @@ class Article(BaseEntity):
             return ArticleStatus.OUTDATED
 
         return ArticleStatus.SYNCED
-
-    # @computed_field
-    # @property
-    # def inventory_value(self) -> float:
-    #     if not (
-    #         self.custom and self.raw.stock_quantity and self.raw.stock_quantity > 0
-    #     ):
-    #         return 0.0
-    #
-    #     value = self.custom.total_cost * Decimal(self.raw.stock_quantity)
-    #     return float(value)
-    #
-    # @computed_field
-    # @property
-    # def deposit_value(self) -> float:
-    #     if not (
-    #         self.custom and self.raw.stock_quantity and self.raw.stock_quantity > 0
-    #     ):
-    #         return 0.0
-    #
-    #     if not self.custom.deposit:
-    #         return 0.0
-    #
-    #     if self.custom.deposit.crate and self.custom.deposit.packaging:
-    #         value = self.custom.deposit.crate * (
-    #             Decimal(self.raw.stock_quantity)
-    #             / Decimal(self.custom.deposit.packaging)
-    #         )
-    #         return float(value)
-    #
-    #     value = self.custom.deposit.unit * Decimal(self.raw.stock_quantity)
-    #     return float(value)

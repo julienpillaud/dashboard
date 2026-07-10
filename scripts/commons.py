@@ -20,7 +20,7 @@ def setup_logging(path: Path) -> None:
 
 
 async def get_context() -> Context:
-    settings = Settings(_env_file=project_path / ".env")  # ty:ignore[missing-argument, unknown-argument]
+    settings = Settings(_env_file=project_path / ".env")  # ty:ignore[unknown-argument]
     http_client = httpx.AsyncClient(timeout=settings.http_client_timeout)
     mongo_resource = await AsyncMongoResource.from_settings(settings)
     return Context(
@@ -39,7 +39,7 @@ async def get_old_articles(database: str) -> list[MongoDocument]:
     settings = Settings(
         _env_file=project_path / ".env",  # ty:ignore[unknown-argument]
         mongo_database=database,
-    )  # ty:ignore[missing-argument]
+    )
     resource = await AsyncMongoResource.from_settings(settings)
     cursor = resource.database["articles"].find()
     return await cursor.to_list()

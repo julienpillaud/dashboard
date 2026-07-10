@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from typing import Protocol
 
 from cleanstack import (
@@ -50,3 +51,13 @@ class POSManagerProtocol(Protocol):
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawArticle]: ...
+
+
+class PDFConverterProtocol(Protocol):
+    def stream_pdf(
+        self,
+        html: str,
+        /,
+        timeout: float = 60,
+        chunk_size: int = 65536,
+    ) -> AsyncIterator[bytes]: ...
