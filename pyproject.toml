@@ -4,7 +4,7 @@ version = "0.2.0"
 requires-python = ">=3.14"
 dependencies = [
     "cleanstack[mongo]",
-    "fastapi[standard]==0.138.2",
+    "fastapi[standard]==0.139.0",
     "itsdangerous==2.2.0",
     "pwdlib[argon2]==0.3.0",
     "pydantic-settings==2.14.2",
@@ -16,10 +16,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "httpx2==2.5.0",
-    "mypy==2.1.0",
+    "mypy==2.2.0",
     "pytest==9.1.1",
-    "ruff==0.15.20",
-    "ty==0.0.55",
+    "ruff==0.15.21",
+    "ty==0.0.58",
 ]
 
 [tool.uv.sources]
@@ -43,6 +43,7 @@ select = [
 ]
 ignore = [
     "SIM117", # multiple-with-statements
+    "PLR0913", # too-many-arguments
 ]
 
 [tool.ty.terminal]

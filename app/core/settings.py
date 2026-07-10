@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     mongo_database: str
     mongo_local: bool = False
 
+    gotenberg_host: str
+
     @computed_field
     @property
     def paths(self) -> AppPaths:
