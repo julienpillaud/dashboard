@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/julienpillaud/dashboard/compare/0.2.0...0.3.0) (2026-07-10)
+
+
+### Features
+
+* improve inventories ([#4](https://github.com/julienpillaud/dashboard/issues/4)) ([c54c4c5](https://github.com/julienpillaud/dashboard/commit/c54c4c5229400f4dbbaf5179be36f1b5c8dc22ac))
+
 ## [0.2.0](https://github.com/julienpillaud/dashboard/compare/0.1.0...0.2.0) (2026-06-29)
 
 
