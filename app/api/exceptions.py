@@ -3,7 +3,7 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.dependencies import get_templates
+from app.api.dependencies.app import get_templates
 from app.api.errors import AuthorizationError
 from app.api.logger import logger
 from app.core.settings import Settings

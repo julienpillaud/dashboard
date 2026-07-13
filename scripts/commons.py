@@ -8,7 +8,7 @@ from cleanstack.mongo import MongoDocument
 from app.core.context import Context
 from app.core.settings import Settings
 from app.domain.stores.entities import Store
-from app.infrastructure.mongo.resource import AsyncMongoResource
+from app.infrastructure.mongo.resource.asynchronous import AsyncMongoResource
 
 project_path = Path(__file__).parents[1]
 

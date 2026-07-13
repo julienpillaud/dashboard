@@ -2,40 +2,66 @@ import logging
 import time
 from collections.abc import Awaitable, Callable
 from types import TracebackType
-from typing import Concatenate
+from typing import Concatenate, Protocol
 
-from app.core.context import ContextFactory
 from app.domain.context import ContextProtocol
-from app.infrastructure.mongo.resource import AsyncMongoResource
 
 logger = logging.getLogger("app")
 
 
-class Domain:
-    def __init__(
+class ResourceProtocol[T](Protocol):
+    async def start_transaction(self, transactional: bool) -> T: ...
+
+    async def end_transaction(
         self,
-        resource: AsyncMongoResource,
-        context_factory: ContextFactory,
-    ) -> None:
-        self.resource = resource
-        self.context_factory = context_factory
-        self.command_name = ""
+        session: T,
+        exc_val: BaseException | None,
+        transactional: bool,
+    ) -> None: ...
+
+
+class Domain:
+    def __init__(self, context: ContextProtocol) -> None:
+        self.context = context
+        self.use_case_timings: list[tuple[str, float]] = []
 
     async def run[**P, R](
         self,
-        command: Callable[Concatenate[ContextProtocol, P], Awaitable[R]],
+        func: Callable[Concatenate[ContextProtocol, P], Awaitable[R]],
         /,
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        self.command_name = getattr(command, "__name__", "unknown")
-        return await command(self.context, *args, **kwargs)
+        name = getattr(func, "__name__", "unknown")
+        start = time.perf_counter()
+        try:
+            return await func(self.context, *args, **kwargs)
+        finally:
+            elapsed = (time.perf_counter() - start) * 1000
+            self.use_case_timings.append((name, elapsed))
+
+
+class BaseDomain[T]:
+    def __init__(
+        self,
+        resource: ResourceProtocol[T],
+        context_provider: Callable[[T], ContextProtocol],
+        transactional: bool = False,
+    ) -> None:
+        self._resource = resource
+        self._context_provider = context_provider
+        self._transactional = transactional
 
     async def __aenter__(self) -> Domain:
-        self._start = time.perf_counter()
-        self._session = await self.resource.start_transaction()
-        self.context = self.context_factory(self._session)
-        return self
+        self._start_time = time.perf_counter()
+        logger.info("Enter Domain")
+
+        self._session = await self._resource.start_transaction(
+            transactional=self._transactional
+        )
+        self._context = self._context_provider(self._session)
+        self._bound_domain = Domain(context=self._context)
+        return self._bound_domain
 
     async def __aexit__(
         self,
@@ -43,6 +69,15 @@ class Domain:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        await self.resource.end_transaction(self._session, exc_val)
-        elapsed = (time.perf_counter() - self._start) * 1000
-        logger.info(f"'{self.command_name}' executed in {elapsed:.1f} ms")
+
+        await self._resource.end_transaction(
+            session=self._session,
+            exc_val=exc_val,
+            transactional=self._transactional,
+        )
+
+        total_elapsed = (time.perf_counter() - self._start_time) * 1000
+        for name, elapsed in self._bound_domain.use_case_timings:
+            logger.info(f"{name} [{elapsed:.1f} ms]")
+        logger.info(f"total [{total_elapsed:.1f} ms]")
+        logger.info("Exit Domain")

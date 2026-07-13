@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from app.api.logger import logger
 from app.core.settings import Settings
-from app.infrastructure.mongo.resource import AsyncMongoResource
+from app.infrastructure.mongo.resource.asynchronous import AsyncMongoResource
 
 
 def lifespan_factory(

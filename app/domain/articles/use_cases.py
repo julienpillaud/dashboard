@@ -13,7 +13,7 @@ from app.domain.exceptions import NotFoundError
 from app.domain.logger import logger
 
 
-async def get_articles_command(
+async def get_articles(
     context: ContextProtocol,
     /,
     store_slug: str | None = None,
@@ -37,7 +37,7 @@ async def get_articles_command(
     )
 
 
-async def synchronize_articles_command(
+async def synchronize_articles(
     context: ContextProtocol,
     /,
     store_slug: str,

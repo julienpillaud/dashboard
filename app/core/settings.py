@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     mongo_password: str
     mongo_host: str
     mongo_database: str
+    supports_transactions: bool = True
     mongo_local: bool = False
 
     gotenberg_host: str

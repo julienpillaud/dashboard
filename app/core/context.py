@@ -8,9 +8,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 from tactill import AsyncTactillClient
 
 from app.core.settings import Settings
-from app.domain.articles.repository import (
-    ArticleRepositoryProtocol,
-)
+from app.domain.articles.repository import ArticleRepositoryProtocol
 from app.domain.categories.repository import CategoryRepositoryProtocol
 from app.domain.context import ContextProtocol
 from app.domain.inventories.repository import InventoryRepositoryProtocol
@@ -27,7 +25,7 @@ from app.infrastructure.mongo.repositories.taxes import TaxRepository
 from app.infrastructure.mongo.repositories.users import UserRepository
 from app.infrastructure.tactill.manager import TactillManager
 
-type ContextFactory = Callable[[AsyncClientSession | None], ContextProtocol]
+type ContextProviderType = Callable[[AsyncClientSession | None], ContextProtocol]
 
 
 class Context(ContextProtocol):
@@ -73,3 +71,23 @@ class Context(ContextProtocol):
             http_client=self.http_client,
         )
         return TactillManager(client=client)
+
+
+class ContextProvider:
+    def __init__(
+        self,
+        settings: Settings,
+        http_client: httpx.AsyncClient,
+        database: AsyncDatabase[MongoDocument],
+    ) -> None:
+        self._settings = settings
+        self._http_client = http_client
+        self._database = database
+
+    def __call__(self, session: AsyncClientSession | None) -> Context:
+        return Context(
+            settings=self._settings,
+            http_client=self._http_client,
+            database=self._database,
+            session=session,
+        )
