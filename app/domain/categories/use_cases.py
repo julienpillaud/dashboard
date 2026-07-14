@@ -8,7 +8,7 @@ from app.domain.logger import logger
 from app.domain.stores.entities import Store
 
 
-async def get_categories_command(
+async def get_categories(
     context: ContextProtocol,
     /,
     store_slug: str | None = None,
@@ -23,7 +23,7 @@ async def get_categories_command(
     return await context.category_repository.get_all(filters=filters)
 
 
-async def get_category_command(
+async def get_category_by_external_id(
     context: ContextProtocol,
     /,
     store: Store,
@@ -39,7 +39,7 @@ async def get_category_command(
     return category
 
 
-async def synchronize_categories_command(
+async def synchronize_categories(
     context: ContextProtocol,
     /,
     store_slug: str,

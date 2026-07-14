@@ -8,7 +8,7 @@ from app.domain.taxes.entities import Tax
 from app.domain.taxes.utils import create_tax, update_tax
 
 
-async def get_taxes_command(
+async def get_taxes(
     context: ContextProtocol,
     /,
     store_slug: str | None = None,
@@ -23,7 +23,7 @@ async def get_taxes_command(
     return await context.tax_repository.get_all(filters=filters)
 
 
-async def get_tax_command(
+async def get_tax_by_external_id(
     context: ContextProtocol,
     /,
     store: Store,
@@ -39,7 +39,7 @@ async def get_tax_command(
     return tax
 
 
-async def synchronize_taxes_command(
+async def synchronize_taxes(
     context: ContextProtocol,
     /,
     store_slug: str,

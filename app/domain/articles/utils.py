@@ -2,10 +2,10 @@ import datetime
 import uuid
 
 from app.domain.articles.entities import Article, RawArticle
-from app.domain.categories.commands import get_categories_command, get_category_command
+from app.domain.categories.use_cases import get_categories, get_category_by_external_id
 from app.domain.context import ContextProtocol
 from app.domain.stores.entities import Store
-from app.domain.taxes.commands import get_tax_command, get_taxes_command
+from app.domain.taxes.use_cases import get_tax_by_external_id, get_taxes
 
 
 async def create_articles(
@@ -14,9 +14,9 @@ async def create_articles(
     store: Store,
     to_create: list[RawArticle],
 ) -> None:
-    categories = await get_categories_command(context, store_slug=store.slug)
+    categories = await get_categories(context, store_slug=store.slug)
     categories_map = {category.raw.id: category for category in categories.items}
-    taxes = await get_taxes_command(context, store_slug=store.slug)
+    taxes = await get_taxes(context, store_slug=store.slug)
     taxes_map = {tax.raw.id: tax for tax in taxes.items}
 
     current_time = datetime.datetime.now(datetime.UTC)
@@ -50,7 +50,7 @@ async def update_articles(
     articles: list[Article] = []
     for article, raw_article in to_update:
         if article.raw.category_id != raw_article.category_id:
-            category = await get_category_command(
+            category = await get_category_by_external_id(
                 context,
                 store,
                 external_id=raw_article.category_id,
@@ -58,7 +58,7 @@ async def update_articles(
             article.category = category.raw.name
 
         if article.raw.taxes[0] != raw_article.taxes[0]:
-            tax = await get_tax_command(
+            tax = await get_tax_by_external_id(
                 context,
                 store,
                 external_id=raw_article.taxes[0],

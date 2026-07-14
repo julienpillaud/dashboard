@@ -7,19 +7,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 
 from app.api.auth.utils import generate_access_token
-from app.api.dependencies import (
-    get_current_user,
-    get_domain,
-    get_optional_current_user,
-    get_settings,
-    get_templates,
-)
-from app.api.logger import logger
+from app.api.dependencies.app import DomainProvider, get_settings, get_templates
+from app.api.dependencies.user import get_current_user, get_optional_current_user
 from app.core.domain import Domain
+from app.core.logger import logger
 from app.core.settings import Settings
 from app.domain.exceptions import ForbiddenError, NotFoundError
-from app.domain.users.commands import authenticate_user_command
 from app.domain.users.entities import UserExternal
+from app.domain.users.use_cases import authenticate_user
 
 router = APIRouter()
 
@@ -46,11 +41,11 @@ async def post_login(
     request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     settings: Annotated[Settings, Depends(get_settings)],
-    domain: Annotated[Domain, Depends(get_domain)],
+    domain: Annotated[Domain, Depends(DomainProvider())],
 ) -> Response:
     try:
         current_user = await domain.run(
-            authenticate_user_command,
+            authenticate_user,
             name=form_data.username,
             password=form_data.password,
         )
@@ -79,11 +74,11 @@ async def post_login(
 async def post_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     settings: Annotated[Settings, Depends(get_settings)],
-    domain: Annotated[Domain, Depends(get_domain)],
+    domain: Annotated[Domain, Depends(DomainProvider())],
 ) -> dict[str, str]:
     try:
         current_user = await domain.run(
-            authenticate_user_command,
+            authenticate_user,
             name=form_data.username,
             password=form_data.password,
         )

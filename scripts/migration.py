@@ -14,9 +14,9 @@ from app.domain.articles.entities import (
     ArticleDetails,
     RawArticle,
 )
-from app.domain.categories.commands import get_categories_command
+from app.domain.categories.use_cases import get_categories
 from app.domain.stores.entities import Store
-from app.domain.taxes.commands import get_taxes_command
+from app.domain.taxes.use_cases import get_taxes
 from scripts.commons import (
     get_context,
     get_old_articles,
@@ -50,9 +50,9 @@ async def fetch_pos_articles(
     pos_manager = context.get_pos_manager(store=store)
     raw_articles = await pos_manager.get_articles(limit=3000)
 
-    categories = await get_categories_command(context, store_slug=store.slug)
+    categories = await get_categories(context, store_slug=store.slug)
     categories_map = {category.raw.id: category for category in categories.items}
-    taxes = await get_taxes_command(context, store_slug=store.slug)
+    taxes = await get_taxes(context, store_slug=store.slug)
     taxes_map = {tax.raw.id: tax for tax in taxes.items}
 
     output = {}
