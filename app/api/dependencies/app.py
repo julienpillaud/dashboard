@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from functools import lru_cache
 from typing import Annotated
 
@@ -6,9 +6,11 @@ from fastapi import Depends
 from fastapi.requests import Request
 from fastapi.templating import Jinja2Templates
 
-from app.core.context import ContextProvider, ContextProviderType
-from app.core.domain import BaseDomain, Domain
+from app.core.context import ContextProvider
+from app.core.domain import Domain, DomainManager, ResourceProtocol
+from app.core.logger import logger
 from app.core.settings import Settings
+from app.domain.context import ContextProtocol
 from app.domain.protocols import PDFConverterProtocol
 from app.infrastructure.gotenberg.converter import GotenbergPDFConverter
 from app.infrastructure.mongo.resource.asynchronous import AsyncMongoResource
@@ -38,37 +40,58 @@ def get_pdf_converter(
 
 
 def get_mongo_resource(request: Request) -> AsyncMongoResource:
-    resource = request.app.state.mongo_resource
-    if not isinstance(resource, AsyncMongoResource):
-        raise RuntimeError()
-
-    return resource
+    mongo_client = request.app.state.mongo_client
+    return AsyncMongoResource(mongo_client)
 
 
 def get_context_provider(
     request: Request,
     settings: Annotated[Settings, Depends(get_settings)],
-    mongo_resource: Annotated[AsyncMongoResource, Depends(get_mongo_resource)],
-) -> ContextProviderType:
+) -> Callable[[ResourceProtocol], ContextProtocol]:
     return ContextProvider(
         settings=settings,
         http_client=request.app.state.http_client,
-        database=mongo_resource.client[settings.mongo_database],
     )
 
 
 class DomainProvider:
-    def __init__(self, *, transactional: bool = False) -> None:
+    def __init__(
+        self,
+        transactional: bool = False,
+        scope: str = "domain",
+    ) -> None:
         self._transactional = transactional
+        self._scope = scope
 
     async def __call__(
         self,
+        request: Request,
         mongo_resource: Annotated[AsyncMongoResource, Depends(get_mongo_resource)],
-        context_provider: Annotated[ContextProviderType, Depends(get_context_provider)],
+        context_provider: Annotated[
+            Callable[[ResourceProtocol], ContextProtocol],
+            Depends(get_context_provider),
+        ],
     ) -> AsyncIterator[Domain]:
-        async with BaseDomain(
+        logger.debug(f"Domain '{self._scope}' transactional={self._transactional}")
+        if not hasattr(request.state, "domains_cache"):
+            request.state.domains_cache = {}
+
+        existing_domain = request.state.domains_cache.get(self._scope)
+        if existing_domain is not None:
+            yield existing_domain
+            return
+
+        async with DomainManager(
             resource=mongo_resource,
             context_provider=context_provider,
             transactional=self._transactional,
         ) as domain:
-            yield domain
+            request.state.domains_cache[self._scope] = domain
+
+            try:
+                yield domain
+            finally:
+                request.state.domains_cache.pop(self._scope, None)
+
+
+get_auth_domain = DomainProvider(transactional=False, scope="auth")

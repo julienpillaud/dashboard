@@ -5,7 +5,7 @@ from fastapi.requests import Request
 from fastapi.security import APIKeyCookie, OAuth2PasswordBearer
 
 from app.api.auth.utils import decode_access_token
-from app.api.dependencies.app import DomainProvider, get_settings
+from app.api.dependencies.app import DomainProvider, get_auth_domain, get_settings
 from app.api.errors import AuthorizationError, InvalidAccessToken
 from app.core.domain import Domain
 from app.core.settings import Settings
@@ -20,7 +20,7 @@ cookie_scheme = APIKeyCookie(name="access_token", auto_error=False)
 async def get_current_user(
     request: Request,
     settings: Annotated[Settings, Depends(get_settings)],
-    domain: Annotated[Domain, Depends(DomainProvider())],
+    domain: Annotated[Domain, Depends(get_auth_domain)],
     bearer_token: Annotated[str | None, Depends(oauth2_scheme)],
     cookie_token: Annotated[str | None, Depends(cookie_scheme)],
 ) -> UserExternal:

@@ -43,7 +43,7 @@ async def get_inventories_endpoint(
     summary="Create inventory",
 )
 async def create_inventory_endpoint(
-    domain: Annotated[Domain, Depends(DomainProvider())],
+    domain: Annotated[Domain, Depends(DomainProvider(transactional=True))],
     store: str,
 ) -> Inventory:
     return await domain.run(create_inventory, store_slug=store)

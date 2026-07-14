@@ -1,12 +1,9 @@
-from collections.abc import Callable
 from functools import cached_property
 
 import httpx
-from cleanstack.mongo import MongoDocument
-from pymongo.asynchronous.client_session import AsyncClientSession
-from pymongo.asynchronous.database import AsyncDatabase
 from tactill import AsyncTactillClient
 
+from app.core.domain import ResourceProtocol
 from app.core.settings import Settings
 from app.domain.articles.repository import ArticleRepositoryProtocol
 from app.domain.categories.repository import CategoryRepositoryProtocol
@@ -23,9 +20,8 @@ from app.infrastructure.mongo.repositories.inventories import InventoryRepositor
 from app.infrastructure.mongo.repositories.stores import StoreRepository
 from app.infrastructure.mongo.repositories.taxes import TaxRepository
 from app.infrastructure.mongo.repositories.users import UserRepository
+from app.infrastructure.mongo.resource.asynchronous import AsyncMongoResource
 from app.infrastructure.tactill.manager import TactillManager
-
-type ContextProviderType = Callable[[AsyncClientSession | None], ContextProtocol]
 
 
 class Context(ContextProtocol):
@@ -33,13 +29,13 @@ class Context(ContextProtocol):
         self,
         settings: Settings,
         http_client: httpx.AsyncClient,
-        database: AsyncDatabase[MongoDocument],
-        session: AsyncClientSession | None = None,
+        resource: AsyncMongoResource,
     ) -> None:
         self.settings = settings
         self.http_client = http_client
-        self.database = database
-        self.session = session
+        self.resource = resource
+        self.database = self.resource.database
+        self.session = self.resource.session
 
     @cached_property
     def user_repository(self) -> UserRepositoryProtocol:
@@ -78,16 +74,16 @@ class ContextProvider:
         self,
         settings: Settings,
         http_client: httpx.AsyncClient,
-        database: AsyncDatabase[MongoDocument],
     ) -> None:
         self._settings = settings
         self._http_client = http_client
-        self._database = database
 
-    def __call__(self, session: AsyncClientSession | None) -> Context:
+    def __call__(self, resource: ResourceProtocol) -> Context:
+        if not isinstance(resource, AsyncMongoResource):
+            raise RuntimeError()
+
         return Context(
             settings=self._settings,
             http_client=self._http_client,
-            database=self._database,
-            session=session,
+            resource=resource,
         )

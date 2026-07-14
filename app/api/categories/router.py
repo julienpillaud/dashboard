@@ -29,7 +29,7 @@ async def get_categories_endpoint(
 
 @router.post("/synchronize", summary="Synchronize categories")
 async def synchronize_categories_endpoint(
-    domain: Annotated[Domain, Depends(DomainProvider())],
+    domain: Annotated[Domain, Depends(DomainProvider(transactional=True))],
     store: str,
 ) -> None:
     await domain.run(synchronize_categories, store_slug=store)

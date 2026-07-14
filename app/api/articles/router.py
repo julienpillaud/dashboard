@@ -37,7 +37,7 @@ async def get_articles_endpoint(
 
 @router.post("/synchronize", summary="Synchronize articles")
 async def synchronize_articles_endpoint(
-    domain: Annotated[Domain, Depends(DomainProvider())],
+    domain: Annotated[Domain, Depends(DomainProvider(transactional=True))],
     store: str,
 ) -> None:
     await domain.run(synchronize_articles, store_slug=store)

@@ -9,8 +9,8 @@ from fastapi.templating import Jinja2Templates
 from app.api.auth.utils import generate_access_token
 from app.api.dependencies.app import DomainProvider, get_settings, get_templates
 from app.api.dependencies.user import get_current_user, get_optional_current_user
-from app.api.logger import logger
 from app.core.domain import Domain
+from app.core.logger import logger
 from app.core.settings import Settings
 from app.domain.exceptions import ForbiddenError, NotFoundError
 from app.domain.users.entities import UserExternal
