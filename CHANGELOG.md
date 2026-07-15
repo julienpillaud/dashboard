@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/julienpillaud/dashboard/compare/0.3.0...0.4.0) (2026-07-15)
+
+
+### Features
+
+* refactor domain ([#6](https://github.com/julienpillaud/dashboard/issues/6)) ([59796df](https://github.com/julienpillaud/dashboard/commit/59796df06da164b581db9064d637cd383a63fe47))
+* simplify domain ([#8](https://github.com/julienpillaud/dashboard/issues/8)) ([1f60e04](https://github.com/julienpillaud/dashboard/commit/1f60e04a469036b3467c9c57757ae0fed469dd06))
+
 ## [0.3.0](https://github.com/julienpillaud/dashboard/compare/0.2.0...0.3.0) (2026-07-10)
 
 
