@@ -17,4 +17,4 @@ def add_timing_middleware(app: FastAPI) -> None:
             return await call_next(request)
         finally:
             elapsed = (time.perf_counter() - start) * 1000
-            logger.info(f"Request [{elapsed:.1f} ms]")
+            logger.info(f"Use case [{elapsed:.1f} ms]")

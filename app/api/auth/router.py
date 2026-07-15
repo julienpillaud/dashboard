@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 
 from app.api.auth.utils import generate_access_token
-from app.api.dependencies.app import DomainProvider, get_settings, get_templates
+from app.api.dependencies.app import get_domain, get_settings, get_templates
 from app.api.dependencies.user import get_current_user, get_optional_current_user
 from app.core.domain import Domain
 from app.core.logger import logger
@@ -41,7 +41,7 @@ async def post_login(
     request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     settings: Annotated[Settings, Depends(get_settings)],
-    domain: Annotated[Domain, Depends(DomainProvider())],
+    domain: Annotated[Domain, Depends(get_domain)],
 ) -> Response:
     try:
         current_user = await domain.run(
@@ -74,7 +74,7 @@ async def post_login(
 async def post_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     settings: Annotated[Settings, Depends(get_settings)],
-    domain: Annotated[Domain, Depends(DomainProvider())],
+    domain: Annotated[Domain, Depends(get_domain)],
 ) -> dict[str, str]:
     try:
         current_user = await domain.run(

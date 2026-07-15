@@ -3,7 +3,7 @@ from typing import Annotated
 from cleanstack import FilterEntity, PaginatedResponse, Pagination
 from fastapi import APIRouter, Depends
 
-from app.api.dependencies.app import DomainProvider
+from app.api.dependencies.app import get_domain
 from app.api.dependencies.user import get_current_user
 from app.api.filters import get_filters
 from app.core.domain import Domain
@@ -22,7 +22,7 @@ router = APIRouter(
 
 @router.get("", summary="Get articles")
 async def get_articles_endpoint(
-    domain: Annotated[Domain, Depends(DomainProvider())],
+    domain: Annotated[Domain, Depends(get_domain)],
     filters: Annotated[list[FilterEntity], Depends(get_filters)],
     pagination: Annotated[Pagination, Depends()],
     store: str | None = None,
@@ -37,7 +37,7 @@ async def get_articles_endpoint(
 
 @router.post("/synchronize", summary="Synchronize articles")
 async def synchronize_articles_endpoint(
-    domain: Annotated[Domain, Depends(DomainProvider(transactional=True))],
+    domain: Annotated[Domain, Depends(get_domain)],
     store: str,
 ) -> None:
     await domain.run(synchronize_articles, store_slug=store)

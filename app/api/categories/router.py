@@ -3,7 +3,7 @@ from typing import Annotated
 from cleanstack import PaginatedResponse
 from fastapi import APIRouter, Depends
 
-from app.api.dependencies.app import DomainProvider
+from app.api.dependencies.app import get_domain
 from app.api.dependencies.user import get_current_user
 from app.core.domain import Domain
 from app.domain.categories.entities import Category
@@ -21,7 +21,7 @@ router = APIRouter(
 
 @router.get("", summary="Get categories")
 async def get_categories_endpoint(
-    domain: Annotated[Domain, Depends(DomainProvider())],
+    domain: Annotated[Domain, Depends(get_domain)],
     store: str | None = None,
 ) -> PaginatedResponse[Category]:
     return await domain.run(get_categories, store_slug=store)
@@ -29,7 +29,7 @@ async def get_categories_endpoint(
 
 @router.post("/synchronize", summary="Synchronize categories")
 async def synchronize_categories_endpoint(
-    domain: Annotated[Domain, Depends(DomainProvider(transactional=True))],
+    domain: Annotated[Domain, Depends(get_domain)],
     store: str,
 ) -> None:
     await domain.run(synchronize_categories, store_slug=store)

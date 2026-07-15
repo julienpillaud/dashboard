@@ -9,8 +9,8 @@ from app.core.context import Context
 from app.core.settings import Settings
 from app.domain.stores.entities import Store
 from app.infrastructure.mongo.resource.asynchronous import (
-    AsyncMongoResource,
-    MongoClient,
+    MongoResource,
+    MongoTransaction,
 )
 
 project_path = Path(__file__).parents[1]
@@ -25,12 +25,12 @@ def setup_logging(path: Path) -> None:
 async def get_context() -> Context:
     settings = Settings(_env_file=project_path / ".env")  # ty:ignore[unknown-argument]
     http_client = httpx.AsyncClient(timeout=settings.http_client_timeout)
-    mongo_client = await MongoClient.from_settings(settings)
-    mongo_resource = AsyncMongoResource(mongo_client)
+    mongo_resource = await MongoResource.from_settings(settings)
+    mongo_transaction = MongoTransaction(mongo_resource)
     return Context(
         settings=settings,
         http_client=http_client,
-        resource=mongo_resource,
+        transaction=mongo_transaction,
     )
 
 
@@ -44,6 +44,6 @@ async def get_old_articles(database: str) -> list[MongoDocument]:
         _env_file=project_path / ".env",  # ty:ignore[unknown-argument]
         mongo_database=database,
     )
-    resource = await MongoClient.from_settings(settings)
+    resource = await MongoResource.from_settings(settings)
     cursor = resource.database["articles"].find()
     return await cursor.to_list()

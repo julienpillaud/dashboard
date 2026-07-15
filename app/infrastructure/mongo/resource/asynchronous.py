@@ -4,19 +4,19 @@ from pymongo import AsyncMongoClient
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
 
-from app.core.domain import ResourceProtocol
+from app.core.domain import TransactionProtocol
 from app.core.settings import Settings
 from app.infrastructure.mongo.logger import logger
 
 
-class MongoClient(BaseModel):
+class MongoResource(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     client: AsyncMongoClient[MongoDocument]
     database: AsyncDatabase[MongoDocument]
 
     @classmethod
-    async def from_settings(cls, settings: Settings, /) -> MongoClient:
+    async def from_settings(cls, settings: Settings, /) -> MongoResource:
         client: AsyncMongoClient[MongoDocument] = AsyncMongoClient(
             host=str(settings.mongo_uri),
             uuidRepresentation="standard",
@@ -33,33 +33,24 @@ class MongoClient(BaseModel):
         await self.client.close()
 
 
-class AsyncMongoResource(ResourceProtocol):
-    def __init__(self, mongo_client: MongoClient, /) -> None:
-        self.client = mongo_client.client
-        self.database = mongo_client.database
+class MongoTransaction(TransactionProtocol):
+    def __init__(self, resource: MongoResource, /) -> None:
+        self.resource = resource
         self.session: AsyncClientSession | None = None
 
-    async def start_transaction(self, transactional: bool) -> None:
-        if transactional:
-            self.session = self.client.start_session()
-            await self.session.start_transaction()
-        else:
-            self.session = None
+    async def start(self) -> None:
+        self.session = self.resource.client.start_session()
+        await self.session.start_transaction()
 
-    async def end_transaction(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        transactional: bool,
-    ) -> None:
+    async def end(self, error: BaseException | None) -> None:
         if not self.session:
             return
 
         if self.session.in_transaction:
-            if exc_type and exc_val:
+            if error:
                 await self.session.abort_transaction()
-                logger.info(f"Transaction rollback: {exc_type.__name__}({exc_val})")
-            elif transactional:
+                logger.warning(f"Transaction rollback: {type(error).__name__}({error})")
+            else:
                 await self.session.commit_transaction()
                 logger.info("Transaction committed")
 
