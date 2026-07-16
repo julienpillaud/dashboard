@@ -8,7 +8,6 @@ from app.api.categories.router import router as categories_router
 from app.api.exceptions import add_exception_handlers
 from app.api.inventories.router import router as inventories_router
 from app.api.lifespan import lifespan_factory
-from app.api.middlewares import add_timing_middleware
 from app.api.taxes.router import router as taxes_router
 from app.core.settings import Settings
 
@@ -24,7 +23,6 @@ def create_fastapi_app(settings: Settings) -> FastAPI:
     )
 
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
-    add_timing_middleware(app)
     add_exception_handlers(app=app, settings=settings)
     app.mount(
         path="/static",
