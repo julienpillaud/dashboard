@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/julienpillaud/dashboard/compare/0.4.0...0.4.1) (2026-07-16)
+
+
+### Bug Fixes
+
+* remove useless middleware ([#9](https://github.com/julienpillaud/dashboard/issues/9)) ([c375d79](https://github.com/julienpillaud/dashboard/commit/c375d79ab65fd9346dd39270c086f99e4f206da1))
+
 ## [0.4.0](https://github.com/julienpillaud/dashboard/compare/0.3.0...0.4.0) (2026-07-15)
 
 
