@@ -1,6 +1,6 @@
 from functools import cached_property
 
-import httpx
+import httpx2
 from tactill import AsyncTactillClient
 
 from app.core.domain import TransactionProtocol
@@ -28,7 +28,7 @@ class Context(ContextProtocol):
     def __init__(
         self,
         settings: Settings,
-        http_client: httpx.AsyncClient,
+        http_client: httpx2.AsyncClient,
         transaction: MongoTransaction,
     ) -> None:
         self.settings = settings
@@ -72,7 +72,7 @@ class ContextProvider:
     def __init__(
         self,
         settings: Settings,
-        http_client: httpx.AsyncClient,
+        http_client: httpx2.AsyncClient,
     ) -> None:
         self._settings = settings
         self._http_client = http_client
