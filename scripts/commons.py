@@ -2,7 +2,7 @@ import json
 import logging.config
 from pathlib import Path
 
-import httpx
+import httpx2
 from cleanstack.mongo import MongoDocument
 
 from app.core.context import Context
@@ -23,8 +23,8 @@ def setup_logging(path: Path) -> None:
 
 
 async def get_context() -> Context:
-    settings = Settings(_env_file=project_path / ".env")  # ty:ignore[unknown-argument]
-    http_client = httpx.AsyncClient(timeout=settings.http_client_timeout)
+    settings = Settings(_env_file=project_path / ".env")
+    http_client = httpx2.AsyncClient(timeout=settings.http_client_timeout)
     mongo_resource = await MongoResource.from_settings(settings)
     mongo_transaction = MongoTransaction(mongo_resource)
     return Context(
@@ -41,7 +41,7 @@ async def get_stores(context: Context) -> list[Store]:
 
 async def get_old_articles(database: str) -> list[MongoDocument]:
     settings = Settings(
-        _env_file=project_path / ".env",  # ty:ignore[unknown-argument]
+        _env_file=project_path / ".env",
         mongo_database=database,
     )
     resource = await MongoResource.from_settings(settings)
