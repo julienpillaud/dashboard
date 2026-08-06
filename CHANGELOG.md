@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/julienpillaud/dashboard/compare/0.4.1...0.4.2) (2026-08-06)
+
+
+### Bug Fixes
+
+* update dependencies ([#11](https://github.com/julienpillaud/dashboard/issues/11)) ([ae58c91](https://github.com/julienpillaud/dashboard/commit/ae58c919335f889f5ce74d92b6aa14772097739d))
+
 ## [0.4.1](https://github.com/julienpillaud/dashboard/compare/0.4.0...0.4.1) (2026-07-16)
 
 
