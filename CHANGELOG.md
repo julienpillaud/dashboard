@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/julienpillaud/dashboard/compare/0.4.2...0.5.0) (2026-08-27)
+
+
+### Features
+
+* add backend directory ([#13](https://github.com/julienpillaud/dashboard/issues/13)) ([5776518](https://github.com/julienpillaud/dashboard/commit/57765186a9b04d74275de6bdac135c9f3301c609))
+
 ## [0.4.2](https://github.com/julienpillaud/dashboard/compare/0.4.1...0.4.2) (2026-08-06)
 
 
