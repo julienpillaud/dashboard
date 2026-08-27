@@ -12,7 +12,6 @@ from app.infrastructure.mongo.resource.asynchronous import MongoResource
 def lifespan_factory(
     settings: Settings,
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
-
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.mongo_resource = await MongoResource.from_settings(settings)

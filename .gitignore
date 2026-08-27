@@ -1,18 +1,17 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info/
-
-# Cache
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-
-# Virtual environments
-.venv/
-
-# Environment variables
+.idea/
 .env
+
+# Backend
+backend/.venv/
+backend/*.egg-info/
+backend/**/__pycache__/
+backend/**/*.py[oc]
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/dist
+
+# Frontend
+frontend/dist/
+frontend/node_modules/
+frontend/.eslintcache
