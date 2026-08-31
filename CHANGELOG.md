@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/julienpillaud/dashboard/compare/0.5.0...0.6.0) (2026-08-31)
+
+
+### Features
+
+* refactoring ([#15](https://github.com/julienpillaud/dashboard/issues/15)) ([924b246](https://github.com/julienpillaud/dashboard/commit/924b246b65ef0a6da78bf17074938c6305c43628))
+
 ## [0.5.0](https://github.com/julienpillaud/dashboard/compare/0.4.2...0.5.0) (2026-08-27)
 
 
