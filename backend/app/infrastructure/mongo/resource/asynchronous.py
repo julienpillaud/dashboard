@@ -36,6 +36,7 @@ class MongoResource(BaseModel):
 class MongoTransaction(TransactionProtocol):
     def __init__(self, resource: MongoResource, /) -> None:
         self.resource = resource
+        self.client = self.resource.client
         self.session: AsyncClientSession | None = None
 
     async def start(self) -> None:

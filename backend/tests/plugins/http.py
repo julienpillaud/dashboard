@@ -1,49 +1,50 @@
 from collections.abc import Iterator
 
 import pytest
-from cleanstack.mongo import MongoDocument
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from pymongo import MongoClient
-from pymongo.database import Database
 
 from app.api.app import create_fastapi_app
-from app.api.auth.utils import generate_access_token
+from app.api.dependencies.app import get_settings
 from app.core.settings import Settings
+from app.domain.security import generate_access_token
+from tests.plugins.users import TestUser
 
 
-@pytest.fixture(scope="session")
-def settings() -> Settings:
-    return Settings()
+class SettingsOverride:
+    def __init__(self, settings: Settings) -> None:
+        self.settings = settings
+
+    def __call__(self) -> Settings:
+        return self.settings
 
 
-@pytest.fixture(scope="session")
-def database(settings: Settings) -> Database[MongoDocument]:
-    client: MongoClient[MongoDocument] = MongoClient(
-        host=str(settings.mongo_uri),
-        uuidRepresentation="standard",
-    )
-    return client[settings.mongo_database]
-
-
-@pytest.fixture(scope="session")
-def token(settings: Settings, database: Database[MongoDocument]) -> str:
-    user = database["users"].find_one({"name": "Admin"})
-    assert user is not None
+@pytest.fixture
+def token(user: TestUser, settings: Settings) -> str:
     return generate_access_token(
         settings=settings,
-        user_id=user["_id"],
+        user_id=user.id,
     )
 
 
 @pytest.fixture(scope="session")
 def app(settings: Settings) -> FastAPI:
-    return create_fastapi_app(settings=settings)
+    app = create_fastapi_app(settings=settings)
+    app.dependency_overrides[get_settings] = SettingsOverride(settings=settings)
+    return app
 
 
 @pytest.fixture
-def client(app: FastAPI, token: str) -> Iterator[TestClient]:
+def client(
+    request: pytest.FixtureRequest,
+    token: str,
+    app: FastAPI,
+) -> Iterator[TestClient]:
+    params = getattr(request, "param", {})
+    authenticated = params.get("authenticated", True)
+
     # Use a context manager to ensure that the lifespan is called
     with TestClient(app) as client:
-        client.headers["Authorization"] = f"Bearer {token}"
+        if authenticated:
+            client.headers["Authorization"] = f"Bearer {token}"
         yield client

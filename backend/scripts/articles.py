@@ -98,6 +98,7 @@ async def main() -> None:
         article = Article(
             id=uuid.uuid7(),
             store_id=result.store.id,
+            store_name=result.store.name,
             category=result.category,
             tax_rate=result.tax_rate,
             raw=result.raw_article,

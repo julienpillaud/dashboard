@@ -12,9 +12,10 @@ from app.domain.articles.use_cases import (
     get_articles,
     synchronize_articles,
 )
+from app.domain.synchronization import SynchronizationResponse
 
 router = APIRouter(
-    prefix="/api/articles",
+    prefix="/articles",
     tags=["Articles"],
     dependencies=[Depends(get_current_user)],
 )
@@ -39,5 +40,6 @@ async def get_articles_endpoint(
 async def synchronize_articles_endpoint(
     domain: Annotated[Domain, Depends(get_domain)],
     store: str,
-) -> None:
-    await domain.run(synchronize_articles, store_slug=store)
+    dry_run: bool = True,
+) -> SynchronizationResponse:
+    return await domain.run(synchronize_articles, store_slug=store, dry_run=dry_run)

@@ -4,6 +4,7 @@ from app.domain.articles.repository import ArticleRepositoryProtocol
 from app.domain.categories.repository import CategoryRepositoryProtocol
 from app.domain.inventories.repository import InventoryRepositoryProtocol
 from app.domain.protocols import POSManagerProtocol
+from app.domain.refresh_tokens.repository import RefreshTokenRepositoryProtocol
 from app.domain.stores.entities import Store
 from app.domain.stores.repository import StoreRepositoryProtocol
 from app.domain.taxes.repository import TaxRepositoryProtocol
@@ -13,6 +14,9 @@ from app.domain.users.repository import UserRepositoryProtocol
 class ContextProtocol(Protocol):
     @property
     def user_repository(self) -> UserRepositoryProtocol: ...
+
+    @property
+    def refresh_token_repository(self) -> RefreshTokenRepositoryProtocol: ...
 
     @property
     def store_repository(self) -> StoreRepositoryProtocol: ...

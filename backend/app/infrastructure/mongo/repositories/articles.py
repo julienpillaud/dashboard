@@ -4,16 +4,12 @@ from typing import Any
 from cleanstack import FilterEntity, FilterOperator, SortEntity, SortOrder
 from cleanstack.exceptions import InvalidFilterError
 from cleanstack.mongo import AsyncMongoRepository, MongoDocument
-from pymongo import UpdateOne
+from pymongo import DeleteOne, UpdateOne
 
 from app.domain.articles.entities import Article
 from app.domain.articles.repository import ArticleRepositoryProtocol
 
-ALLOWED_FILTERS = [
-    "store_id",
-    "category",
-    "raw.name",
-]
+ALLOWED_FILTERS = ["store_id", "category", "raw.name", "status"]
 
 
 class ArticleRepository(
@@ -41,7 +37,7 @@ class ArticleRepository(
                     "$eq": uuid.UUID(filter_entity.value)
                 }
 
-            if filter_entity.field in {"category", "raw.name"}:
+            if filter_entity.field in {"category", "raw.name", "status"}:
                 assert isinstance(filter_entity.value, str)
                 filters_pipeline[filter_entity.field] = {"$eq": filter_entity.value}
 
@@ -104,4 +100,11 @@ class ArticleRepository(
             for entity in entities
         ]
 
+        await self.collection.bulk_write(requests=requests, ordered=False)
+
+    async def delete_many(self, entities: list[Article], /) -> None:
+        if not entities:
+            return
+
+        requests = [DeleteOne(filter={"_id": entity.id}) for entity in entities]
         await self.collection.bulk_write(requests=requests, ordered=False)

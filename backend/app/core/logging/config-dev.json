@@ -16,6 +16,9 @@
     "httpcore": {
       "level": "INFO"
     },
+    "httpcore2": {
+      "level": "INFO"
+    },
     "pymongo": {
       "level": "INFO"
     },
