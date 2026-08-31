@@ -1,124 +1,85 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.requests import Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.templating import Jinja2Templates
 
-from app.api.auth.utils import generate_access_token
-from app.api.dependencies.app import get_domain, get_settings, get_templates
-from app.api.dependencies.user import get_current_user, get_optional_current_user
+from app.api.auth.utils import (
+    OAuth2RefreshTokenRequestForm,
+    TokenResponse,
+    make_not_authenticated_error,
+)
+from app.api.dependencies.app import get_domain, get_settings
+from app.api.dependencies.user import get_current_user
 from app.core.domain import Domain
-from app.core.logger import logger
 from app.core.settings import Settings
-from app.domain.exceptions import ForbiddenError, NotFoundError
+from app.domain.exceptions import (
+    InvalidRefreshTokenError,
+    NotFoundError,
+    UnauthorizedError,
+)
 from app.domain.users.entities import UserExternal
-from app.domain.users.use_cases import authenticate_user
+from app.domain.users.use_cases import (
+    authenticate_user,
+    create_user_session,
+    logout_user,
+    refresh_user_session,
+)
 
-router = APIRouter()
-
-
-@router.get("/")
-async def login(
-    request: Request,
-    current_user: Annotated[UserExternal | None, Depends(get_optional_current_user)],
-    templates: Annotated[Jinja2Templates, Depends(get_templates)],
-) -> Response:
-    if current_user:
-        return RedirectResponse(url="/articles", status_code=status.HTTP_302_FOUND)
-
-    message = request.session.pop("message", None)
-    return templates.TemplateResponse(
-        request=request,
-        name="login.html",
-        context={"error": message},
-    )
-
-
-@router.post("/")
-async def post_login(
-    request: Request,
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    settings: Annotated[Settings, Depends(get_settings)],
-    domain: Annotated[Domain, Depends(get_domain)],
-) -> Response:
-    try:
-        current_user = await domain.run(
-            authenticate_user,
-            name=form_data.username,
-            password=form_data.password,
-        )
-    except NotFoundError, ForbiddenError:
-        request.session["message"] = "Nom ou mot de passe incorrect"
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-
-    access_token = generate_access_token(
-        settings=settings,
-        user_id=current_user.id,
-    )
-    response = RedirectResponse(url="/articles", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        max_age=settings.access_token_expire,
-        secure=True,
-        httponly=True,
-        samesite="lax",
-    )
-    logger.info(f"User '{current_user.id}' - Logged in")
-    return response
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/token")
-async def post_access_token(
+async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     settings: Annotated[Settings, Depends(get_settings)],
     domain: Annotated[Domain, Depends(get_domain)],
-) -> dict[str, str]:
+) -> TokenResponse:
     try:
         current_user = await domain.run(
             authenticate_user,
             name=form_data.username,
             password=form_data.password,
         )
-    except (NotFoundError, ForbiddenError) as error:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from error
+    except (NotFoundError, UnauthorizedError) as error:
+        raise make_not_authenticated_error() from error
 
-    access_token = generate_access_token(
+    user_session = await domain.run(
+        create_user_session,
         settings=settings,
         user_id=current_user.id,
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return TokenResponse(
+        access_token=user_session.access_token,
+        expires_in=settings.access_token_expire,
+        refresh_token=user_session.refresh_token,
+    )
 
 
-@router.get("/logout")
+@router.post("/refresh")
+async def refresh_token(
+    form_data: Annotated[OAuth2RefreshTokenRequestForm, Depends()],
+    settings: Annotated[Settings, Depends(get_settings)],
+    domain: Annotated[Domain, Depends(get_domain)],
+) -> TokenResponse:
+    try:
+        user_session = await domain.run(
+            refresh_user_session,
+            settings=settings,
+            raw_value=form_data.refresh_token,
+        )
+    except InvalidRefreshTokenError as error:
+        raise make_not_authenticated_error() from error
+
+    return TokenResponse(
+        access_token=user_session.access_token,
+        expires_in=settings.access_token_expire,
+        refresh_token=user_session.refresh_token,
+    )
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     current_user: Annotated[UserExternal, Depends(get_current_user)],
-) -> Response:
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    response.delete_cookie(
-        key="access_token",
-        secure=True,
-        httponly=True,
-        samesite="lax",
-    )
-    logger.info(f"User '{current_user.id}' - Logged out")
-    return response
-
-
-@router.get("/articles")
-async def home(
-    request: Request,
-    current_user: Annotated[UserExternal, Depends(get_current_user)],
-    templates: Annotated[Jinja2Templates, Depends(get_templates)],
-) -> Response:
-    return templates.TemplateResponse(
-        request=request,
-        name="articles.html",
-        context={"current_user": current_user},
-    )
+    domain: Annotated[Domain, Depends(get_domain)],
+) -> None:
+    await domain.run(logout_user, user_id=current_user.id)

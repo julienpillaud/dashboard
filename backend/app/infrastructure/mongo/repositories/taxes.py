@@ -1,5 +1,5 @@
 from cleanstack.mongo import AsyncMongoRepository
-from pymongo import UpdateOne
+from pymongo import DeleteOne, UpdateOne
 
 from app.domain.stores.entities import Store
 from app.domain.taxes.entities import Tax
@@ -44,4 +44,11 @@ class TaxRepository(AsyncMongoRepository[Tax], TaxRepositoryProtocol):
             )
             for entity in entities
         ]
+        await self.collection.bulk_write(requests=requests, ordered=False)
+
+    async def delete_many(self, entities: list[Tax], /) -> None:
+        if not entities:
+            return
+
+        requests = [DeleteOne({"_id": entity.id}) for entity in entities]
         await self.collection.bulk_write(requests=requests, ordered=False)

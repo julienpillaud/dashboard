@@ -18,7 +18,7 @@ from app.domain.inventories.use_cases import (
 from app.domain.protocols import PDFConverterProtocol
 
 router = APIRouter(
-    prefix="/api/inventories",
+    prefix="/inventories",
     tags=["Inventories"],
     dependencies=[Depends(get_current_user)],
 )

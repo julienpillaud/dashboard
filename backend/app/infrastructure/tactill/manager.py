@@ -1,10 +1,9 @@
-from tactill import AsyncTactillClient, FilterEntity, FilterOperator
+from tactill import AsyncTactillClient, FilterEntity
 
 from app.domain.articles.entities import RawArticle
 from app.domain.categories.entities import RawCategory
 from app.domain.protocols import POSManagerProtocol
 from app.domain.taxes.entities import RawTax
-from app.infrastructure.tactill.data import CATEGORIES
 
 
 class TactillManager(POSManagerProtocol):
@@ -24,17 +23,7 @@ class TactillManager(POSManagerProtocol):
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawCategory]:
-        categories = await self.client.categories.get_all(
-            limit=limit,
-            skip=skip,
-            filters=[
-                FilterEntity(
-                    field="name",
-                    value=CATEGORIES,
-                    operator=FilterOperator.IN,
-                )
-            ],
-        )
+        categories = await self.client.categories.get_all(limit=limit, skip=skip)
         return [
             RawCategory.model_validate(category.model_dump()) for category in categories
         ]
@@ -44,17 +33,9 @@ class TactillManager(POSManagerProtocol):
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawArticle]:
-        categories = await self.get_categories()
-        category_ids = [category.id for category in categories]
         articles = await self.client.articles.get_all(
             limit=limit,
             skip=skip,
-            filters=[
-                FilterEntity(
-                    field="category_id",
-                    value=category_ids,
-                    operator=FilterOperator.IN,
-                )
-            ],
+            filters=[FilterEntity(field="is_default", value="false")],
         )
         return [RawArticle.model_validate(article.model_dump()) for article in articles]

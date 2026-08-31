@@ -13,6 +13,10 @@ class BadRequestError(DomainError):
     """Domain error for a 400 HTTP status code."""
 
 
+class UnauthorizedError(DomainError):
+    """Domain error for a 401 HTTP status code."""
+
+
 class ForbiddenError(DomainError):
     """Domain error for a 403 HTTP status code."""
 
@@ -27,3 +31,7 @@ class ConflictError(DomainError):
 
 class UnprocessableContentError(DomainError):
     """Domain error for a 422 HTTP status code."""
+
+
+class InvalidRefreshTokenError(DomainError):
+    pass

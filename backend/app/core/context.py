@@ -10,6 +10,7 @@ from app.domain.categories.repository import CategoryRepositoryProtocol
 from app.domain.context import ContextProtocol
 from app.domain.inventories.repository import InventoryRepositoryProtocol
 from app.domain.protocols import POSManagerProtocol
+from app.domain.refresh_tokens.repository import RefreshTokenRepositoryProtocol
 from app.domain.stores.entities import Store
 from app.domain.stores.repository import StoreRepositoryProtocol
 from app.domain.taxes.repository import TaxRepositoryProtocol
@@ -17,6 +18,7 @@ from app.domain.users.repository import UserRepositoryProtocol
 from app.infrastructure.mongo.repositories.articles import ArticleRepository
 from app.infrastructure.mongo.repositories.categories import CategoryRepository
 from app.infrastructure.mongo.repositories.inventories import InventoryRepository
+from app.infrastructure.mongo.repositories.refresh_tokens import RefreshTokenRepository
 from app.infrastructure.mongo.repositories.stores import StoreRepository
 from app.infrastructure.mongo.repositories.taxes import TaxRepository
 from app.infrastructure.mongo.repositories.users import UserRepository
@@ -33,12 +35,17 @@ class Context(ContextProtocol):
     ) -> None:
         self.settings = settings
         self.http_client = http_client
+        self.transaction = transaction
         self.database = transaction.resource.database
         self.session = transaction.session
 
     @cached_property
     def user_repository(self) -> UserRepositoryProtocol:
         return UserRepository(database=self.database, session=self.session)
+
+    @cached_property
+    def refresh_token_repository(self) -> RefreshTokenRepositoryProtocol:
+        return RefreshTokenRepository(database=self.database, session=self.session)
 
     @cached_property
     def store_repository(self) -> StoreRepositoryProtocol:

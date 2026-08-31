@@ -1,5 +1,5 @@
 from cleanstack.mongo import AsyncMongoRepository
-from pymongo import UpdateOne
+from pymongo import DeleteOne, UpdateOne
 
 from app.domain.categories.entities import Category
 from app.domain.categories.repository import CategoryRepositoryProtocol
@@ -41,4 +41,11 @@ class CategoryRepository(AsyncMongoRepository[Category], CategoryRepositoryProto
             )
             for entity in entities
         ]
+        await self.collection.bulk_write(requests=requests, ordered=False)
+
+    async def delete_many(self, entities: list[Category], /) -> None:
+        if not entities:
+            return
+
+        requests = [DeleteOne({"_id": entity.id}) for entity in entities]
         await self.collection.bulk_write(requests=requests, ordered=False)

@@ -1,33 +1,40 @@
 from fastapi import FastAPI, status
 from fastapi.requests import Request
-from fastapi.responses import JSONResponse, RedirectResponse, Response
-from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import JSONResponse
 
-from app.api.dependencies.app import get_templates
-from app.api.errors import AuthorizationError
 from app.core.logger import logger
-from app.core.settings import Settings
 from app.domain.exceptions import (
     BadRequestError,
     ConflictError,
     DomainError,
-    ForbiddenError,
     NotFoundError,
     UnprocessableContentError,
 )
 
+
+class APIError(Exception):
+    def __init__(self, message: str) -> None:
+        logger.error(message)
+        super().__init__(message)
+
+
+class SecurityError(APIError):
+    pass
+
+
+class InvalidAccessTokenError(SecurityError):
+    pass
+
+
 ERROR_MAPPING: dict[type[DomainError], int] = {
     BadRequestError: status.HTTP_400_BAD_REQUEST,
-    ForbiddenError: status.HTTP_403_FORBIDDEN,
     NotFoundError: status.HTTP_404_NOT_FOUND,
     ConflictError: status.HTTP_409_CONFLICT,
     UnprocessableContentError: status.HTTP_422_UNPROCESSABLE_CONTENT,
 }
 
 
-def add_exception_handlers(app: FastAPI, settings: Settings) -> None:
-    templates = get_templates(settings=settings)
-
+def add_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def domain_exception_handler(
         request: Request,
@@ -41,26 +48,3 @@ def add_exception_handlers(app: FastAPI, settings: Settings) -> None:
                 break
 
         return JSONResponse(status_code=status_code, content={"detail": str(exc)})
-
-    @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request,
-        exc: StarletteHTTPException,
-    ) -> Response:
-        exc_name = exc.__class__.__name__
-        message = f"{request.method} {request.url.path} - {exc_name}: {exc}"
-        logger.warning(message)
-        if "text/html" in request.headers.get("accept", ""):
-            return templates.TemplateResponse(request=request, name="error.html")
-
-        return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
-
-    @app.exception_handler(AuthorizationError)
-    async def authorization_handler(
-        request: Request,
-        exc: StarletteHTTPException,
-    ) -> Response:
-        exc_name = exc.__class__.__name__
-        message = f"{request.method} {request.url.path} - {exc_name}: {exc}"
-        logger.warning(message)
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)

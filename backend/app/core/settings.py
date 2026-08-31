@@ -19,12 +19,13 @@ class Settings(BaseSettings):
         env_file=".env",
     )
 
-    secret_key: str
+    api_prefix: str = "/api"
     http_client_timeout: int = 10
 
-    jwt_secret: str
+    secret_key: str
     jwt_algorithm: str = "HS256"
     access_token_expire: int
+    refresh_token_expire: int
 
     mongo_user: str
     mongo_password: str

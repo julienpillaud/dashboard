@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -23,17 +23,19 @@ def create_fastapi_app(settings: Settings) -> FastAPI:
     )
 
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
-    add_exception_handlers(app=app, settings=settings)
+    add_exception_handlers(app=app)
     app.mount(
         path="/static",
         app=StaticFiles(directory=settings.paths.static),
         name="static",
     )
 
-    app.include_router(auth_router)
-    app.include_router(taxes_router)
-    app.include_router(categories_router)
-    app.include_router(articles_router)
-    app.include_router(inventories_router)
+    api_router = APIRouter(prefix=settings.api_prefix)
+    api_router.include_router(auth_router)
+    api_router.include_router(taxes_router)
+    api_router.include_router(categories_router)
+    api_router.include_router(articles_router)
+    api_router.include_router(inventories_router)
+    app.include_router(api_router)
 
     return app

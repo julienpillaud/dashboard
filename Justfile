@@ -7,10 +7,12 @@ dev:
 dev-down:
     docker compose -f compose-dev.yaml down
 
+[working-directory('backend')]
 lint:
     uv run ruff check --fix || true
     uv run ruff format
     uv run ty check
 
+[working-directory('backend')]
 tests *options="":
     uv run pytest {{ options }}

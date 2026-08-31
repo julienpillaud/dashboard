@@ -1,51 +1,32 @@
-import datetime
-import uuid
+from typing import Annotated
 
-import jwt
-from cleanstack import EntityId
-from pydantic import BaseModel, ValidationError
-
-from app.api.errors import InvalidAccessToken
-from app.core.settings import Settings
+from fastapi import Form, HTTPException, status
+from pydantic import BaseModel
 
 
-class TokenPayload(BaseModel):
-    sub: uuid.UUID
-    exp: datetime.datetime
-    iat: datetime.datetime
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "Bearer"
+    expires_in: int
+    refresh_token: str
 
 
-def generate_access_token(
-    settings: Settings,
-    user_id: EntityId,
-    current_date: datetime.datetime | None = None,
-) -> str:
-    current_date = current_date or datetime.datetime.now(datetime.UTC)
-    delta = datetime.timedelta(seconds=settings.access_token_expire)
-    return jwt.encode(
-        payload={
-            "sub": str(user_id),
-            "exp": current_date + delta,
-            "iat": current_date,
-        },
-        key=settings.jwt_secret,
-        algorithm=settings.jwt_algorithm,
+def make_not_authenticated_error() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
 
-def decode_access_token(settings: Settings, value: str) -> TokenPayload:
-    try:
-        payload = jwt.decode(
-            jwt=value,
-            key=settings.jwt_secret,
-            algorithms=[settings.jwt_algorithm],
-        )
-    except jwt.ExpiredSignatureError as error:
-        raise InvalidAccessToken("Token expired") from error
-    except jwt.PyJWTError as error:
-        raise InvalidAccessToken("Could not decode token") from error
-
-    try:
-        return TokenPayload.model_validate(payload)
-    except ValidationError as error:
-        raise InvalidAccessToken("Invalid token payload") from error
+class OAuth2RefreshTokenRequestForm:
+    def __init__(
+        self,
+        *,
+        grant_type: Annotated[str, Form(pattern="^refresh_token$")],
+        refresh_token: Annotated[str, Form()],
+        scope: Annotated[str, Form()] = "",
+    ) -> None:
+        self.grant_type = grant_type
+        self.refresh_token = refresh_token
+        self.scopes = scope.split()

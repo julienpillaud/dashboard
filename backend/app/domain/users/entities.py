@@ -10,3 +10,8 @@ class User(BaseEntity):
 class UserExternal(BaseModel):
     id: EntityId
     name: str
+
+
+class UserSession(BaseModel):
+    access_token: str
+    refresh_token: str
