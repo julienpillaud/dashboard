@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/julienpillaud/dashboard/compare/0.6.0...0.7.0) (2026-09-03)
+
+
+### Features
+
+* update synchronization ([#17](https://github.com/julienpillaud/dashboard/issues/17)) ([f98ede7](https://github.com/julienpillaud/dashboard/commit/f98ede7228f22a82b8d462efcdda85c9b4c40cd3))
+
 ## [0.6.0](https://github.com/julienpillaud/dashboard/compare/0.5.0...0.6.0) (2026-08-31)
 
 
