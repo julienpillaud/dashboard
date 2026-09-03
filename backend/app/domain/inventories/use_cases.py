@@ -103,6 +103,7 @@ async def create_inventory(
         )
         records.append(record)
 
+    sorted_records = sorted(records, key=lambda x: (x.category, x.name))
     inventory = Inventory(
         id=uuid.uuid7(),
         store_id=store.id,
@@ -115,7 +116,7 @@ async def create_inventory(
         articles_count=sum(article.stock_quantity for article in records),
         category_summary=report.to_category_summary(),
         tax_summary=report.to_tax_summary(),
-        records=records,
+        records=sorted_records,
     )
     await context.inventory_repository.save(inventory)
     return inventory
@@ -123,13 +124,13 @@ async def create_inventory(
 
 def get_inventory_value(total_cost: DecimalType, stock_quantity: int) -> DecimalType:
     value = total_cost * Decimal(stock_quantity)
-    return value.quantize(Decimal(".01"), rounding=ROUND_HALF_UP)
+    return value.quantize(Decimal(".0001"), rounding=ROUND_HALF_UP)
 
 
 def get_deposit_value(deposit: ArticleDeposit, stock_quantity: int) -> DecimalType:
     if deposit.crate and deposit.packaging:
-        value = deposit.crate * (Decimal(stock_quantity) / Decimal(deposit.packaging))
-        return value.quantize(Decimal(".01"), rounding=ROUND_HALF_UP)
+        value = (deposit.crate * Decimal(stock_quantity)) / Decimal(deposit.packaging)
+        return value.quantize(Decimal(".0001"), rounding=ROUND_HALF_UP)
 
     value = deposit.unit * Decimal(stock_quantity)
-    return value.quantize(Decimal(".01"), rounding=ROUND_HALF_UP)
+    return value.quantize(Decimal(".0001"), rounding=ROUND_HALF_UP)

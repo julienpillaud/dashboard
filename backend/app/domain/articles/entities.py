@@ -6,13 +6,11 @@ from cleanstack import BaseEntity, EntityId
 from pydantic import BaseModel, Field, PositiveFloat, PositiveInt, computed_field
 
 from app.domain.entities import BaseRawEntity, DateTime, DecimalType
-from app.domain.synchronization import SynchronizationItem
 
 
 class RawArticle(BaseRawEntity):
     category_id: str
     taxes: list[str]
-    name: str
     icon_text: str
     color: str
     barcode: str | None
@@ -20,14 +18,6 @@ class RawArticle(BaseRawEntity):
     reference: str | None
     full_price: float | None
     stock_quantity: int | None
-
-    def to_sync_item(self) -> SynchronizationItem:
-        return SynchronizationItem(
-            id=self.id,
-            name=self.name,
-            updated_at=self.updated_at,
-            stock_quantity=self.stock_quantity,
-        )
 
 
 class VolumeUnit(StrEnum):

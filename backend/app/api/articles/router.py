@@ -12,7 +12,7 @@ from app.domain.articles.use_cases import (
     get_articles,
     synchronize_articles,
 )
-from app.domain.synchronization import SynchronizationResponse
+from app.domain.synchronization.entities import SynchronizationResponse
 
 router = APIRouter(
     prefix="/articles",
@@ -37,7 +37,7 @@ async def get_articles_endpoint(
 
 
 @router.post("/synchronize", summary="Synchronize articles")
-async def synchronize_articles_endpoint(
+async def synchronize_articles_endpoint[T](
     domain: Annotated[Domain, Depends(get_domain)],
     store: str,
     dry_run: bool = True,

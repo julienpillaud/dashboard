@@ -50,18 +50,17 @@ class Report(BaseModel):
                 amount=values["amount"],
                 deposit_amount=values["deposit_amount"],
             )
-            for category, values in self.summary.items()
+            for category, values in sorted(self.summary.items())
         }
 
     def to_tax_summary(self) -> dict[str, InventoryAmounts]:
-        sorted_items = sorted(
-            self.tax_rate_summary.items(), key=lambda item: float(item[0])
-        )
-
         return {
             tax_rate: InventoryAmounts(
                 amount=values["amount"],
                 deposit_amount=values["deposit_amount"],
             )
-            for tax_rate, values in sorted_items
+            for tax_rate, values in sorted(
+                self.tax_rate_summary.items(),
+                key=lambda x: float(x[0]),
+            )
         }

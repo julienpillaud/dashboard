@@ -11,10 +11,10 @@ class GotenbergPDFConverter(PDFConverterProtocol):
         self.host = host
         self.converter_url = f"{host}/forms/chromium/convert/html"
         self.options = {
-            "marginTop": "0",
-            "marginBottom": "0",
-            "marginLeft": "0",
-            "marginRight": "0",
+            "marginTop": "0.3cm",
+            "marginBottom": "0.3cm",
+            "marginLeft": "0.3cm",
+            "marginRight": "0.3cm",
         }
 
     async def stream_pdf(

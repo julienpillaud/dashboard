@@ -11,7 +11,7 @@ from app.domain.categories.use_cases import (
     get_categories,
     synchronize_categories,
 )
-from app.domain.synchronization import SynchronizationResponse
+from app.domain.synchronization.entities import SynchronizationResponse
 
 router = APIRouter(
     prefix="/categories",

@@ -8,8 +8,8 @@ from app.domain.entities import DateTime, DecimalType
 
 
 class InventoryAmounts(BaseModel):
-    amount: Annotated[DecimalType, Field(ge=0, decimal_places=2)]
-    deposit_amount: Annotated[DecimalType, Field(ge=0, decimal_places=2)]
+    amount: Annotated[DecimalType, Field(ge=0, decimal_places=4)]
+    deposit_amount: Annotated[DecimalType, Field(ge=0, decimal_places=4)]
 
     @property
     def total_amount(self) -> DecimalType:
