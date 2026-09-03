@@ -1,12 +1,27 @@
 import uuid
 
 from app.domain.categories.entities import Category, RawCategory
+from app.domain.categories.synchronization.entities import CategorySynchronizationPlan
 from app.domain.context import ContextProtocol
 from app.domain.logger import logger
 from app.domain.stores.entities import Store
 
 
-async def create_category(
+async def persist_synchronization_plan(
+    context: ContextProtocol,
+    /,
+    store: Store,
+    plan: CategorySynchronizationPlan,
+) -> None:
+    await create_categories(context, store=store, to_create=plan.to_create)
+    await update_categories(
+        context,
+        to_update=[(item.entity, item.raw_entity) for item in plan.to_update],
+    )
+    await delete_categories(context, to_delete=plan.to_delete)
+
+
+async def create_categories(
     context: ContextProtocol,
     /,
     store: Store,
@@ -28,7 +43,7 @@ async def create_category(
     await context.category_repository.save_many(categories)
 
 
-async def update_category(
+async def update_categories(
     context: ContextProtocol,
     /,
     to_update: list[tuple[Category, RawCategory]],
@@ -45,7 +60,7 @@ async def update_category(
     await context.category_repository.update_many(categories)
 
 
-async def delete_category(
+async def delete_categories(
     context: ContextProtocol,
     /,
     to_delete: list[Category],

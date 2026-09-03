@@ -2,11 +2,27 @@ import datetime
 import uuid
 
 from app.domain.articles.entities import Article, RawArticle
+from app.domain.articles.synchronization.entities import ArticleSynchronizationPlan
 from app.domain.categories.use_cases import get_categories, get_category_by_external_id
 from app.domain.context import ContextProtocol
 from app.domain.logger import logger
 from app.domain.stores.entities import Store
 from app.domain.taxes.use_cases import get_tax_by_external_id, get_taxes
+
+
+async def persist_synchronization_plan(
+    context: ContextProtocol,
+    /,
+    store: Store,
+    plan: ArticleSynchronizationPlan,
+) -> None:
+    await create_articles(context, store=store, to_create=plan.to_create)
+    await update_articles(
+        context,
+        store=store,
+        to_update=[(item.entity, item.raw_entity) for item in plan.to_update],
+    )
+    await delete_articles(context, to_delete=plan.to_delete)
 
 
 async def create_articles(

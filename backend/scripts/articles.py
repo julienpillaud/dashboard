@@ -122,7 +122,8 @@ async def main() -> None:
         )
         to_create.append(article)
 
-    await context.article_repository.save_many(to_create)
+    # await context.database["articles"].delete_many({})
+    # await context.article_repository.save_many(to_create)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ from typing import Annotated
 
 import jwt
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from pydantic import BaseModel, ValidationError
 
 from app.api.auth.utils import make_not_authenticated_error
@@ -16,7 +16,8 @@ from app.domain.exceptions import NotFoundError
 from app.domain.users.entities import UserExternal
 from app.domain.users.use_cases import get_user_by_id
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token", auto_error=False)
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 class TokenPayload(BaseModel):
@@ -46,8 +47,13 @@ def decode_access_token(settings: Settings, value: str) -> TokenPayload:
 async def get_current_user(
     settings: Annotated[Settings, Depends(get_settings)],
     domain: Annotated[Domain, Depends(get_domain)],
-    access_token: Annotated[str, Depends(oauth2_scheme)],
+    oauth2_token: Annotated[str | None, Depends(oauth2_scheme)],
+    bearer_token: Annotated[str | None, Depends(bearer_scheme)],
 ) -> UserExternal:
+    access_token = oauth2_token or bearer_token
+    if not access_token:
+        raise make_not_authenticated_error()
+
     try:
         access_payload = decode_access_token(settings=settings, value=access_token)
     except InvalidAccessTokenError as error:

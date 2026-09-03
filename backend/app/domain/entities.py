@@ -1,6 +1,6 @@
 import datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Protocol
 
 from pydantic import AfterValidator, BaseModel, PlainSerializer
 
@@ -21,6 +21,12 @@ DateTime = Annotated[datetime.datetime, AfterValidator(normalize_datetime)]
 
 class BaseRawEntity(BaseModel):
     id: str
+    name: str
     deprecated: bool
     created_at: DateTime
     updated_at: DateTime
+
+
+class DomainEntity(Protocol):
+    @property
+    def raw(self) -> BaseRawEntity: ...

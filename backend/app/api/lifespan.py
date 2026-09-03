@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 
-import httpx
+import httpx2
 from fastapi import FastAPI
 
 from app.core.logger import logger
@@ -15,7 +15,7 @@ def lifespan_factory(
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.mongo_resource = await MongoResource.from_settings(settings)
-        app.state.http_client = httpx.AsyncClient(timeout=settings.http_client_timeout)
+        app.state.http_client = httpx2.AsyncClient(timeout=settings.http_client_timeout)
         logger.info("Application startup complete")
 
         yield

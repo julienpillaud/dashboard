@@ -4,9 +4,24 @@ from app.domain.context import ContextProtocol
 from app.domain.logger import logger
 from app.domain.stores.entities import Store
 from app.domain.taxes.entities import RawTax, Tax
+from app.domain.taxes.synchronisation.entities import TaxSynchronizationPlan
 
 
-async def create_tax(
+async def persist_synchronization_plan(
+    context: ContextProtocol,
+    /,
+    store: Store,
+    plan: TaxSynchronizationPlan,
+) -> None:
+    await create_taxes(context, store=store, to_create=plan.to_create)
+    await update_taxes(
+        context,
+        to_update=[(item.entity, item.raw_entity) for item in plan.to_update],
+    )
+    await delete_taxes(context, to_delete=plan.to_delete)
+
+
+async def create_taxes(
     context: ContextProtocol,
     /,
     store: Store,
@@ -28,7 +43,7 @@ async def create_tax(
     await context.tax_repository.save_many(taxes)
 
 
-async def update_tax(
+async def update_taxes(
     context: ContextProtocol,
     /,
     to_update: list[tuple[Tax, RawTax]],
@@ -45,7 +60,7 @@ async def update_tax(
     await context.tax_repository.update_many(taxes)
 
 
-async def delete_tax(
+async def delete_taxes(
     context: ContextProtocol,
     /,
     to_delete: list[Tax],
