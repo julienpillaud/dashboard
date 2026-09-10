@@ -36,6 +36,13 @@ class TactillManager(POSManagerProtocol):
         articles = await self.client.articles.get_all(
             limit=limit,
             skip=skip,
-            filters=[FilterEntity(field="is_default", value="false")],
+            filters=[
+                FilterEntity(field="is_default", value="false"),
+                FilterEntity(field="in_stock", value="true"),
+            ],
         )
-        return [RawArticle.model_validate(article.model_dump()) for article in articles]
+        return [
+            RawArticle.model_validate(article.model_dump())
+            for article in articles
+            if article.full_price is not None and article.stock_quantity is not None
+        ]

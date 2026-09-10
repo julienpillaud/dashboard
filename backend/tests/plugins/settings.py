@@ -5,6 +5,14 @@ import pytest
 from app.core.settings import Settings
 
 
+class SettingsOverride:
+    def __init__(self, settings: Settings) -> None:
+        self.settings = settings
+
+    def __call__(self) -> Settings:
+        return self.settings
+
+
 @pytest.fixture(scope="session")
 def settings() -> Settings:
     return Settings(

@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from cleanstack import (
     FilterEntity,
     PaginatedResponse,
@@ -6,7 +8,7 @@ from cleanstack import (
     SortOrder,
 )
 
-from app.domain.articles.entities import Article
+from app.domain.articles.entities import Article, ArticleGroup
 from app.domain.articles.synchronization.persistence import persist_synchronization_plan
 from app.domain.articles.synchronization.plan import build_synchronization_plan
 from app.domain.context import ContextProtocol
@@ -39,6 +41,36 @@ async def get_articles(
     )
 
 
+async def get_articles_by_group(
+    context: ContextProtocol,
+    /,
+    pagination: Pagination | None = None,
+) -> PaginatedResponse[ArticleGroup]:
+    total_articles = await context.article_repository.count()
+    response = await context.article_repository.get_all(
+        pagination=Pagination(size=total_articles)
+    )
+
+    groups = defaultdict(list)
+    for article in response.items:
+        groups[article.group_id].append(article)
+
+    all_groups = [
+        ArticleGroup(group_id=group_id, articles=group_articles)
+        for group_id, group_articles in groups.items()
+    ]
+
+    pagination = pagination or Pagination()
+    total = len(all_groups)
+    return PaginatedResponse(
+        page=pagination.page,
+        size=pagination.size,
+        pages=pagination.pages(total),
+        total=total,
+        items=all_groups[pagination.skip : pagination.skip + pagination.size],
+    )
+
+
 async def synchronize_articles(
     context: ContextProtocol,
     /,
@@ -52,9 +84,12 @@ async def synchronize_articles(
     pos_manager = context.get_pos_manager(store=store)
     raw_articles = await pos_manager.get_articles(limit=3000)
 
+    total_articles = await context.article_repository.count(
+        filters=[FilterEntity(field="store_id", value=str(store.id))]
+    )
     response = await context.article_repository.get_all(
         filters=[FilterEntity(field="store_id", value=str(store.id))],
-        pagination=Pagination(size=3000),
+        pagination=Pagination(size=total_articles),
     )
 
     plan = build_synchronization_plan(

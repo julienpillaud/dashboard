@@ -72,6 +72,7 @@ class Article(BaseEntity):
     raw: RawArticle
     data: ArticleData | None
     synced_at: DateTime
+    group_id: EntityId
 
     @computed_field
     @property
@@ -83,3 +84,8 @@ class Article(BaseEntity):
             return ArticleStatus.OUTDATED
 
         return ArticleStatus.SYNCED
+
+
+class ArticleGroup(BaseModel):
+    group_id: EntityId
+    articles: list[Article]

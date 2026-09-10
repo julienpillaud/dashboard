@@ -1,10 +1,19 @@
 import uuid
 from typing import Any
 
-from cleanstack import FilterEntity, FilterOperator, SortEntity, SortOrder
+from cleanstack import (
+    FilterEntity,
+    FilterOperator,
+    PaginatedResponse,
+    Pagination,
+    SortEntity,
+    SortOrder,
+)
 from cleanstack.exceptions import InvalidFilterError
 from cleanstack.mongo import AsyncMongoRepository, MongoDocument
 from pymongo import DeleteOne, UpdateOne
+from pymongo.asynchronous.client_session import AsyncClientSession
+from pymongo.asynchronous.database import AsyncDatabase
 
 from app.domain.articles.entities import Article
 from app.domain.articles.repository import ArticleRepositoryProtocol
@@ -12,13 +21,7 @@ from app.domain.articles.repository import ArticleRepositoryProtocol
 ALLOWED_FILTERS = ["store_id", "category", "raw.name", "status"]
 
 
-class ArticleRepository(
-    AsyncMongoRepository[Article],
-    ArticleRepositoryProtocol,
-):
-    domain_entity_type = Article
-    collection_name = "articles"
-
+class ArticleMongoAdapter(AsyncMongoRepository[Article]):
     def filters_stage(self, filters: list[FilterEntity] | None) -> list[MongoDocument]:
         if not filters:
             return []
@@ -55,14 +58,56 @@ class ArticleRepository(
 
         return [{"$sort": sort_pipeline}]
 
+
+class ArticleRepository(ArticleRepositoryProtocol):
+    domain_entity_type = Article
+    collection_name = "articles"
+    searchable_fields = ()
+
+    def __init__(
+        self,
+        database: AsyncDatabase[MongoDocument],
+        session: AsyncClientSession | None = None,
+    ) -> None:
+        self.repository = ArticleMongoAdapter.from_binding(
+            binding=self,
+            database=database,
+            session=session,
+        )
+
+    async def get_all(
+        self,
+        search: str | None = None,
+        filters: list[FilterEntity] | None = None,
+        sort: list[SortEntity] | None = None,
+        pagination: Pagination | None = None,
+    ) -> PaginatedResponse[Article]:
+        return await self.repository.get_all(
+            search=search,
+            filters=filters,
+            sort=sort,
+            pagination=pagination,
+        )
+
+    async def count(self, filters: list[FilterEntity] | None = None) -> int:
+        count_pipeline = [*self.repository.filters_stage(filters), {"$count": "total"}]
+        count_cursor = await self.repository.collection.aggregate(
+            pipeline=count_pipeline,
+            session=self.repository.session,
+        )
+        count_result = await count_cursor.try_next()
+        return int(count_result["total"]) if count_result else 0
+
     async def save_many(self, entities: list[Article], /) -> None:
         if not entities:
             return
 
-        db_entities = [self.to_database_entity(entity) for entity in entities]
-        await self.collection.insert_many(
+        db_entities = [
+            self.repository.to_database_entity(entity) for entity in entities
+        ]
+        await self.repository.collection.insert_many(
             documents=db_entities,
-            session=self.session,
+            session=self.repository.session,
         )
 
     async def update_raw(self, entities: list[Article], /) -> None:
@@ -84,7 +129,7 @@ class ArticleRepository(
             for entity in entities
         ]
 
-        await self.collection.bulk_write(requests=requests, ordered=False)
+        await self.repository.collection.bulk_write(requests=requests, ordered=False)
 
     async def update_data(self, entities: list[Article], /) -> None:
         if not entities:
@@ -100,11 +145,11 @@ class ArticleRepository(
             for entity in entities
         ]
 
-        await self.collection.bulk_write(requests=requests, ordered=False)
+        await self.repository.collection.bulk_write(requests=requests, ordered=False)
 
     async def delete_many(self, entities: list[Article], /) -> None:
         if not entities:
             return
 
         requests = [DeleteOne(filter={"_id": entity.id}) for entity in entities]
-        await self.collection.bulk_write(requests=requests, ordered=False)
+        await self.repository.collection.bulk_write(requests=requests, ordered=False)
