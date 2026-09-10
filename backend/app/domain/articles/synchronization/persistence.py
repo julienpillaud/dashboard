@@ -55,6 +55,7 @@ async def create_articles(
             raw=raw_article,
             data=None,
             synced_at=current_time,
+            group_id=uuid.uuid7(),
         )
         articles.append(article)
 

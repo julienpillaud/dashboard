@@ -8,12 +8,11 @@ DecimalType = Annotated[Decimal, PlainSerializer(float)]
 
 
 def normalize_datetime(dt: datetime.datetime) -> datetime.datetime:
-    # Ensure datetime returns by database is in UTC
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=datetime.UTC)
-
     # MongoDB does not have enough precision to store microseconds
-    return dt.replace(microsecond=(dt.microsecond // 1000) * 1000)
+    return dt.replace(
+        microsecond=(dt.microsecond // 1000) * 1000,
+        tzinfo=datetime.UTC,
+    )
 
 
 DateTime = Annotated[datetime.datetime, AfterValidator(normalize_datetime)]

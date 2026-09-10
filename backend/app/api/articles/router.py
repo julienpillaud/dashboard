@@ -7,9 +7,10 @@ from app.api.dependencies.app import get_domain
 from app.api.dependencies.user import get_current_user
 from app.api.filters import get_filters
 from app.core.domain import Domain
-from app.domain.articles.entities import Article
+from app.domain.articles.entities import Article, ArticleGroup
 from app.domain.articles.use_cases import (
     get_articles,
+    get_articles_by_group,
     synchronize_articles,
 )
 from app.domain.synchronization.entities import SynchronizationResponse
@@ -32,6 +33,17 @@ async def get_articles_endpoint(
         get_articles,
         store_slug=store,
         filters=filters,
+        pagination=pagination,
+    )
+
+
+@router.get("/groups", summary="Get articles by group")
+async def get_articles_groups_endpoint(
+    domain: Annotated[Domain, Depends(get_domain)],
+    pagination: Annotated[Pagination, Depends()],
+) -> PaginatedResponse[ArticleGroup]:
+    return await domain.run(
+        get_articles_by_group,
         pagination=pagination,
     )
 

@@ -1,10 +1,10 @@
 import asyncio
 import datetime
-import logging.config
 import uuid
-from pathlib import Path
+from collections import defaultdict
 from typing import NamedTuple
 
+from cleanstack import EntityId
 from cleanstack.mongo import MongoDocument
 
 from app.core.context import Context
@@ -15,13 +15,12 @@ from app.domain.articles.entities import (
     RawArticle,
 )
 from app.domain.categories.use_cases import get_categories
+from app.domain.context import ContextProtocol
 from app.domain.stores.entities import Store
 from app.domain.taxes.use_cases import get_taxes
 from scripts.commons import (
-    get_context,
-    get_old_articles,
     get_stores,
-    setup_logging,
+    logger,
 )
 from scripts.utils import (
     empty_to_none,
@@ -30,9 +29,6 @@ from scripts.utils import (
     get_total_cost,
     get_volume,
 )
-
-logger = logging.getLogger("app.migration")
-project_path = Path(__file__).parents[1]
 
 
 class PosFetchResult(NamedTuple):
@@ -43,9 +39,9 @@ class PosFetchResult(NamedTuple):
 
 
 async def fetch_pos_articles(
-    context: Context,
+    context: ContextProtocol,
+    /,
     store: Store,
-    old_articles_map: dict[str, MongoDocument],
 ) -> dict[str, PosFetchResult]:
     pos_manager = context.get_pos_manager(store=store)
     raw_articles = await pos_manager.get_articles(limit=3000)
@@ -57,9 +53,6 @@ async def fetch_pos_articles(
 
     output = {}
     for raw_article in raw_articles:
-        if not raw_article.reference or raw_article.reference not in old_articles_map:
-            logger.warning(f"Article not found: {raw_article.name} ({store.name})")
-
         output_key = raw_article.reference or f"NO_REF_{raw_article.id}"
         output[output_key] = PosFetchResult(
             store=store,
@@ -71,29 +64,52 @@ async def fetch_pos_articles(
     return output
 
 
-async def main() -> None:
-    setup_logging(project_path)
-    context = await get_context()
-    stores = await get_stores(context)
+async def get_old_articles(context: Context) -> list[MongoDocument]:
+    db_source = context.transaction.client["dashboard"]
+    cursor = db_source["articles"].find()
+    return await cursor.to_list()
 
-    old_articles = await get_old_articles("dashboard")
+
+async def build_old_articles_map(context: Context) -> dict[str, MongoDocument]:
+    old_articles = await get_old_articles(context=context)
     old_articles_map = {}
     for old_article in old_articles:
         old_article["internal_id"] = uuid.uuid7()
         old_articles_map[str(old_article["_id"])] = old_article
 
-    tasks = [fetch_pos_articles(context, store, old_articles_map) for store in stores]
-    pos_articles = await asyncio.gather(*tasks)
+    return old_articles_map
 
-    flat_pos_articles = [
-        (reference, result)
-        for store_map in pos_articles
-        for reference, result in store_map.items()
-    ]
 
+def build_group_ids(
+    pos_articles: list[tuple[str, PosFetchResult]],
+) -> dict[str, EntityId]:
+    references = set()
+    by_name_category = defaultdict(list)
+    for reference, result in pos_articles:
+        if not reference.startswith("NO_REF_"):
+            references.add(reference)
+        else:
+            key = (result.raw_article.name, result.category)
+            by_name_category[key].append(reference)
+
+    group_ids = {reference: uuid.uuid7() for reference in references}
+
+    for refs in by_name_category.values():
+        group_id = uuid.uuid7()
+        for ref in refs:
+            group_ids[ref] = group_id
+
+    return group_ids
+
+
+def build_articles(
+    pos_articles: list[tuple[str, PosFetchResult]],
+    old_articles_map: dict[str, MongoDocument],
+    group_ids: dict[str, EntityId],
+) -> list[Article]:
     current_time = datetime.datetime.now(datetime.UTC)
     to_create = []
-    for reference, result in flat_pos_articles:
+    for reference, result in pos_articles:
         old_article = old_articles_map.get(reference)
         article = Article(
             id=uuid.uuid7(),
@@ -119,12 +135,39 @@ async def main() -> None:
             if old_article
             else None,
             synced_at=current_time,
+            group_id=group_ids[reference],
         )
         to_create.append(article)
 
-    # await context.database["articles"].delete_many({})
-    # await context.article_repository.save_many(to_create)
+    return to_create
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+async def migrate_articles(context: Context, dry_run: bool) -> None:
+    stores = await get_stores(context)
+    if not stores:
+        logger.warning("No stores in database")
+        return
+
+    tasks = [fetch_pos_articles(context, store=store) for store in stores]
+    fetch_responses = await asyncio.gather(*tasks)
+    pos_articles = [
+        (reference, result)
+        for response in fetch_responses
+        for reference, result in response.items()
+    ]
+    logger.info(f"POS articles: {len(pos_articles)}")
+
+    group_ids = build_group_ids(pos_articles=pos_articles)
+    old_articles_map = await build_old_articles_map(context=context)
+    logger.info(f"Old articles: {len(old_articles_map)}")
+    articles = build_articles(
+        pos_articles=pos_articles,
+        old_articles_map=old_articles_map,
+        group_ids=group_ids,
+    )
+
+    if not dry_run:
+        await context.database["articles"].delete_many({})
+        await context.article_repository.save_many(articles)
+    else:
+        logger.warning("Dry run: nothing to do")
