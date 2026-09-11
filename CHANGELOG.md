@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/julienpillaud/dashboard/compare/0.8.0...0.9.0) (2026-09-11)
+
+
+### Features
+
+* refactor for v2 ([#21](https://github.com/julienpillaud/dashboard/issues/21)) ([98098cf](https://github.com/julienpillaud/dashboard/commit/98098cfe424556c9aa3a38b4c5635c6edfa7678b))
+
 ## [0.8.0](https://github.com/julienpillaud/dashboard/compare/0.7.0...0.8.0) (2026-09-10)
 
 
