@@ -1,4 +1,4 @@
-from cleanstack import BaseEntity, EntityId
+from cleanstack import BaseEntity
 
 from app.domain.entities import BaseRawEntity
 
@@ -8,6 +8,5 @@ class RawTax(BaseRawEntity):
 
 
 class Tax(BaseEntity):
-    store_id: EntityId
-    store_name: str
-    raw: RawTax
+    rate: float
+    store_mapping: dict[str, RawTax]

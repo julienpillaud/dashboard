@@ -1,4 +1,4 @@
-from cleanstack import BaseEntity, EntityId
+from cleanstack import BaseEntity
 
 from app.domain.entities import BaseRawEntity
 
@@ -9,7 +9,5 @@ class RawCategory(BaseRawEntity):
 
 
 class Category(BaseEntity):
-    store_id: EntityId
-    store_name: str
-    raw: RawCategory
-    is_visible: bool = True
+    name: str
+    store_mapping: dict[str, RawCategory]

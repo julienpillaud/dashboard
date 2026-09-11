@@ -7,13 +7,8 @@ from app.api.dependencies.app import get_domain
 from app.api.dependencies.user import get_current_user
 from app.api.filters import get_filters
 from app.core.domain import Domain
-from app.domain.articles.entities import Article, ArticleGroup
-from app.domain.articles.use_cases import (
-    get_articles,
-    get_articles_by_group,
-    synchronize_articles,
-)
-from app.domain.synchronization.entities import SynchronizationResponse
+from app.domain.articles.entities import Article
+from app.domain.articles.use_cases import get_articles
 
 router = APIRouter(
     prefix="/articles",
@@ -27,31 +22,5 @@ async def get_articles_endpoint(
     domain: Annotated[Domain, Depends(get_domain)],
     filters: Annotated[list[FilterEntity], Depends(get_filters)],
     pagination: Annotated[Pagination, Depends()],
-    store: str | None = None,
 ) -> PaginatedResponse[Article]:
-    return await domain.run(
-        get_articles,
-        store_slug=store,
-        filters=filters,
-        pagination=pagination,
-    )
-
-
-@router.get("/groups", summary="Get articles by group")
-async def get_articles_groups_endpoint(
-    domain: Annotated[Domain, Depends(get_domain)],
-    pagination: Annotated[Pagination, Depends()],
-) -> PaginatedResponse[ArticleGroup]:
-    return await domain.run(
-        get_articles_by_group,
-        pagination=pagination,
-    )
-
-
-@router.post("/synchronize", summary="Synchronize articles")
-async def synchronize_articles_endpoint[T](
-    domain: Annotated[Domain, Depends(get_domain)],
-    store: str,
-    dry_run: bool = True,
-) -> SynchronizationResponse:
-    return await domain.run(synchronize_articles, store_slug=store, dry_run=dry_run)
+    return await domain.run(get_articles, filters=filters, pagination=pagination)

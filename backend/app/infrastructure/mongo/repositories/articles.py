@@ -11,7 +11,7 @@ from cleanstack import (
 )
 from cleanstack.exceptions import InvalidFilterError
 from cleanstack.mongo import AsyncMongoRepository, MongoDocument
-from pymongo import DeleteOne, UpdateOne
+from pymongo import DeleteOne
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -109,43 +109,6 @@ class ArticleRepository(ArticleRepositoryProtocol):
             documents=db_entities,
             session=self.repository.session,
         )
-
-    async def update_raw(self, entities: list[Article], /) -> None:
-        if not entities:
-            return
-
-        requests = [
-            UpdateOne(
-                filter={"_id": entity.id},
-                update={
-                    "$set": {
-                        "category": entity.category,
-                        "tax_rate": entity.tax_rate,
-                        "raw": entity.raw.model_dump(),
-                        "synced_at": entity.synced_at,
-                    },
-                },
-            )
-            for entity in entities
-        ]
-
-        await self.repository.collection.bulk_write(requests=requests, ordered=False)
-
-    async def update_data(self, entities: list[Article], /) -> None:
-        if not entities:
-            return
-
-        requests = [
-            UpdateOne(
-                filter={"_id": entity.id},
-                update={
-                    "$set": {"data": entity.data.model_dump() if entity.data else None}
-                },
-            )
-            for entity in entities
-        ]
-
-        await self.repository.collection.bulk_write(requests=requests, ordered=False)
 
     async def delete_many(self, entities: list[Article], /) -> None:
         if not entities:
