@@ -17,7 +17,6 @@ class InventoryAmounts(BaseModel):
 
 
 class InventoryRecord(BaseModel):
-    external_id: str
     name: str
     category: str
     tax_rate: float

@@ -66,9 +66,7 @@ async def create_inventory(
     created_at: datetime.datetime,
     dry_run: bool,
 ) -> None:
-    articles_map = {
-        (article.raw.name, article.category): article for article in articles
-    }
+    articles_map = {(article.name, article.category): article for article in articles}
 
     records = []
     report = Report()
@@ -100,8 +98,7 @@ async def create_inventory(
         )
 
         record = InventoryRecord(
-            external_id=article.raw.id,
-            name=article.raw.name,
+            name=article.name,
             category=article.category,
             tax_rate=article.tax_rate,
             stock_quantity=item.stock_quantity,

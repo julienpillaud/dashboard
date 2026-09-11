@@ -33,17 +33,21 @@ class CategoryRepository:
         self.repository.save(entity)
 
 
-def generate_category(*, store: Store, **kwargs: Any) -> Category:  # noqa: ANN401
+def generate_raw_category(**kwargs: Any) -> RawCategory:  # noqa: ANN401
+    return RawCategory(
+        **generate_base_raw_fields(**kwargs),
+        icon_text=kwargs.get("icon_text", faker.word()),
+        color=kwargs.get("color", faker.color()),
+    )
+
+
+def generate_category(*, stores: list[Store], **kwargs: Any) -> Category:  # noqa: ANN401
     return Category(
         id=uuid.uuid7(),
-        store_id=store.id,
-        store_name=store.name,
-        raw=RawCategory(
-            **generate_base_raw_fields(**kwargs),
-            icon_text=kwargs.get("icon_text", faker.word()),
-            color=kwargs.get("color", faker.color()),
-        ),
-        is_visible=kwargs.get("is_visible", True),
+        name=kwargs.get("name", faker.word()),
+        store_mapping={
+            str(store.id): generate_raw_category(**kwargs) for store in stores
+        },
     )
 
 
@@ -55,11 +59,11 @@ class CategoryFactory(BaseMongoFactory[Category]):
     def build(
         self,
         *,
-        store: Store | None = None,
+        stores: list[Store] | None = None,
         **kwargs: Any,  # noqa: ANN401
     ) -> Category:
-        store = store or self.store_factory.create_one()
-        return generate_category(store=store, **kwargs)
+        stores = stores or self.store_factory.create_many(3)
+        return generate_category(stores=stores, **kwargs)
 
     @property
     def _repository(self) -> CategoryRepository:

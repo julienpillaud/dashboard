@@ -69,7 +69,7 @@ class Context(ContextProtocol):
 
     def get_pos_manager(self, store: Store) -> POSManagerProtocol:
         client = AsyncTactillClient(
-            api_key=store.tactill_api_key,
+            api_key=store.pos_api_key,
             http_client=self.http_client,
         )
         return TactillManager(client=client)

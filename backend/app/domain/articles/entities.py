@@ -1,9 +1,8 @@
-import uuid
 from enum import StrEnum
 from typing import Annotated
 
-from cleanstack import BaseEntity, EntityId
-from pydantic import BaseModel, Field, PositiveFloat, PositiveInt, computed_field
+from cleanstack import BaseEntity
+from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
 
 from app.domain.entities import BaseRawEntity, DateTime, DecimalType
 
@@ -51,41 +50,22 @@ class ArticleDetails(BaseModel):
 
 
 class ArticleData(BaseModel):
-    internal_id: uuid.UUID
     details: ArticleDetails | None
     total_cost: Annotated[DecimalType, Field(gt=0, decimal_places=4)]
     deposit: ArticleDeposit | None
-    enhanced_at: DateTime
 
 
-class ArticleStatus(StrEnum):
-    DRAFT = "draft"
-    OUTDATED = "outdated"
-    SYNCED = "synced"
+class PosArticle(BaseModel):
+    store_name: str
+    price: float
+    raw: RawArticle | None
 
 
 class Article(BaseEntity):
-    store_id: EntityId
-    store_name: str
+    name: str
     category: str
     tax_rate: float
-    raw: RawArticle
-    data: ArticleData | None
-    synced_at: DateTime
-    group_id: EntityId
-
-    @computed_field
-    @property
-    def status(self) -> ArticleStatus:
-        if not self.data:
-            return ArticleStatus.DRAFT
-
-        if self.raw.updated_at > self.data.enhanced_at:
-            return ArticleStatus.OUTDATED
-
-        return ArticleStatus.SYNCED
-
-
-class ArticleGroup(BaseModel):
-    group_id: EntityId
-    articles: list[Article]
+    data: ArticleData
+    store_mapping: dict[str, PosArticle]
+    created_at: DateTime
+    updated_at: DateTime

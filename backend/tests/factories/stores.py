@@ -37,7 +37,7 @@ def generate_store(**kwargs: Any) -> Store:  # noqa: ANN401
         id=uuid.uuid7(),
         name=name,
         slug=slug,
-        tactill_api_key=faker.hexify(text="^" * 24),
+        pos_api_key=faker.hexify(text="^" * 24),
     )
 
 

@@ -13,6 +13,7 @@ from app.domain.articles.entities import (
     ArticleDetails,
     ArticleOrigin,
     ArticleVolume,
+    PosArticle,
     RawArticle,
     VolumeUnit,
 )
@@ -99,7 +100,6 @@ def generate_article_details(**kwargs: Any) -> ArticleDetails:  # noqa: ANN401
 
 def generate_article_data(**kwargs: Any) -> ArticleData:  # noqa: ANN401
     return ArticleData(
-        internal_id=kwargs.get("internal_id", uuid.uuid7()),
         details=kwargs.get(
             "details",
             generate_article_details() if faker.boolean() else None,
@@ -112,7 +112,6 @@ def generate_article_data(**kwargs: Any) -> ArticleData:  # noqa: ANN401
             "deposit",
             generate_article_deposit() if faker.boolean() else None,
         ),
-        enhanced_at=kwargs.get("enhanced_at", faker.date_time()),
     )
 
 
@@ -147,21 +146,29 @@ def generate_raw_article(**kwargs: Any) -> RawArticle:  # noqa: ANN401
 
 def generate_article(
     *,
-    store: Store,
+    stores: list[Store],
     tax: Tax,
     category: Category,
     **kwargs: Any,  # noqa: ANN401
 ) -> Article:
     return Article(
         id=uuid.uuid7(),
-        store_id=store.id,
-        store_name=store.name,
-        category=category.raw.name,
-        tax_rate=tax.raw.rate,
-        raw=generate_raw_article(**kwargs),
+        name=kwargs.get("name", faker.word()),
+        category=category.name,
+        tax_rate=tax.rate,
         data=generate_article_data(**kwargs),
-        synced_at=kwargs.get("synced_at", faker.date_time()),
-        group_id=kwargs.get("group_id", uuid.uuid7()),
+        store_mapping={
+            str(store.id): PosArticle(
+                store_name=store.name,
+                price=kwargs.get(
+                    "price", faker.pydecimal(right_digits=4, positive=True)
+                ),
+                raw=generate_raw_article(**kwargs),
+            )
+            for store in stores
+        },
+        created_at=kwargs.get("created_at", faker.date_time()),
+        updated_at=kwargs.get("updated_at", faker.date_time()),
     )
 
 
@@ -181,16 +188,16 @@ class ArticleFactory(BaseMongoFactory[Article]):
     def build(
         self,
         *,
-        store: Store | None = None,
+        stores: list[Store] | None = None,
         tax: Tax | None = None,
         category: Category | None = None,
         **kwargs: Any,  # noqa: ANN401
     ) -> Article:
-        store = store or self.store_factory.create_one()
-        tax = tax or self.tax_factory.create_one(store=store)
-        category = category or self.category_factory.create_one(store=store)
+        stores = stores or self.store_factory.create_many(3)
+        tax = tax or self.tax_factory.create_one(stores=stores)
+        category = category or self.category_factory.create_one(stores=stores)
         return generate_article(
-            store=store,
+            stores=stores,
             tax=tax,
             category=category,
             **kwargs,

@@ -33,15 +33,18 @@ class TaxRepository:
         self.repository.save(entity)
 
 
-def generate_tax(*, store: Store, **kwargs: Any) -> Tax:  # noqa: ANN401
+def generate_raw_tax(**kwargs: Any) -> RawTax:  # noqa: ANN401
+    return RawTax(
+        **generate_base_raw_fields(**kwargs),
+        rate=kwargs.get("rate", faker.pyfloat()),
+    )
+
+
+def generate_tax(*, stores: list[Store], **kwargs: Any) -> Tax:  # noqa: ANN401
     return Tax(
         id=uuid.uuid7(),
-        store_id=store.id,
-        store_name=store.name,
-        raw=RawTax(
-            **generate_base_raw_fields(**kwargs),
-            rate=kwargs.get("rate", faker.pyfloat()),
-        ),
+        rate=kwargs.get("rate", faker.pyfloat()),
+        store_mapping={str(store.id): generate_raw_tax(**kwargs) for store in stores},
     )
 
 
@@ -53,11 +56,11 @@ class TaxFactory(BaseMongoFactory[Tax]):
     def build(
         self,
         *,
-        store: Store | None = None,
+        stores: list[Store] | None = None,
         **kwargs: Any,  # noqa: ANN401
     ) -> Tax:
-        store = store or self.store_factory.create_one()
-        return generate_tax(store=store, **kwargs)
+        stores = stores or self.store_factory.create_many(3)
+        return generate_tax(stores=stores, **kwargs)
 
     @property
     def _repository(self) -> TaxRepository:

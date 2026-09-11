@@ -20,7 +20,7 @@ async def migrate_stores(context: Context, dry_run: bool) -> None:
             id=uuid.uuid7(),
             name=old_store["name"],
             slug=old_store["username"],
-            tactill_api_key=old_store["tactill_api_key"],
+            pos_api_key=old_store["tactill_api_key"],
         )
         for old_store in old_stores
     ]
