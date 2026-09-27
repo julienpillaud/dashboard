@@ -1,7 +1,15 @@
+from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class AppEnvironment(StrEnum):
+    DEVELOPMENT = "development"
+    TESTING = "testing"
+    PRODUCTION = "production"
 
 
 class AppPaths(BaseModel):
@@ -12,20 +20,28 @@ class AppPaths(BaseModel):
     static: Path
 
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        extra="ignore",
-        frozen=True,
-        env_file=".env",
-    )
+class DocsConfig(BaseModel):
+    docs_url: str | None = None
+    redoc_url: str | None = None
+    openapi_url: str | None = None
+    swagger_ui_parameters: dict[str, Any] | None = {
+        "tryItOutEnabled": True,
+        "displayRequestDuration": True,
+        "persistAuthorization": True,
+    }
 
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore", frozen=True, env_file=".env")
+
+    environment: AppEnvironment
     api_prefix: str = "/api"
     http_client_timeout: int = 10
 
     secret_key: str
     jwt_algorithm: str = "HS256"
-    access_token_expire: int
-    refresh_token_expire: int
+    access_token_expire: int = 15 * 60  # 15 minutes
+    refresh_token_expire: int = 7 * 24 * 60 * 60  # 7 days
 
     mongo_user: str
     mongo_password: str
@@ -35,6 +51,16 @@ class Settings(BaseSettings):
     mongo_local: bool = False
 
     gotenberg_host: str
+
+    @computed_field
+    @property
+    def docs(self) -> dict[str, Any]:
+        config = DocsConfig()
+
+        if self.environment == AppEnvironment.DEVELOPMENT:
+            return config.model_dump(exclude={"docs_url", "openapi_url"})
+
+        return config.model_dump()
 
     @computed_field
     @property

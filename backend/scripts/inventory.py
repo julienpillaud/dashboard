@@ -23,6 +23,7 @@ from app.infrastructure.mongo.resource.asynchronous import (
     MongoResource,
     MongoTransaction,
 )
+from app.infrastructure.tactill.factory import TactillClientFactory
 
 
 class InventoryFile(BaseModel):
@@ -50,9 +51,11 @@ def read_inventory(csv_file: Path) -> list[InventoryFile]:
 async def get_context(settings: Settings) -> Context:
     resource = await MongoResource.from_settings(settings)
     transaction = MongoTransaction(resource)
+    http_client = httpx2.AsyncClient()
     return Context(
         settings=settings,
-        http_client=httpx2.AsyncClient(),
+        http_client=http_client,
+        tactill_factory=TactillClientFactory(http_client=http_client),
         transaction=transaction,
     )
 
@@ -75,19 +78,23 @@ async def create_inventory(
         if not article:
             continue
 
-        if not article.data or item.stock_quantity <= 0:
+        if (
+            not article.details
+            or not article.details.deposit
+            or item.stock_quantity <= 0
+        ):
             continue
 
         inventory_amount = get_inventory_value(
-            total_cost=article.data.total_cost,
+            total_cost=article.total_cost,
             stock_quantity=item.stock_quantity,
         )
         deposit_amount = (
             get_deposit_value(
-                deposit=article.data.deposit,
+                deposit=article.details.deposit,
                 stock_quantity=item.stock_quantity,
             )
-            if article.data.deposit
+            if article.details.deposit
             else Decimal(0)
         )
         report.add(
@@ -102,8 +109,8 @@ async def create_inventory(
             category=article.category,
             tax_rate=article.tax_rate,
             stock_quantity=item.stock_quantity,
-            total_cost=article.data.total_cost,
-            deposit=article.data.deposit,
+            total_cost=article.total_cost,
+            deposit=article.details.deposit,
             amounts=InventoryAmounts(
                 amount=inventory_amount,
                 deposit_amount=deposit_amount,

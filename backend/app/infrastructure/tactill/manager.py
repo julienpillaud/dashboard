@@ -1,8 +1,16 @@
-from tactill import AsyncTactillClient, FilterEntity
+from decimal import Decimal
 
-from app.domain.articles.entities import RawArticle
+from tactill import ArticleCreate, AsyncTactillClient, FilterEntity, TactillColor
+from tactill.exceptions import (
+    TactillError,
+)
+
+from app.domain.articles.entities import Article, RawArticle
 from app.domain.categories.entities import RawCategory
-from app.domain.protocols import POSManagerProtocol
+from app.domain.protocols import (
+    POSError,
+    POSManagerProtocol,
+)
 from app.domain.taxes.entities import RawTax
 
 
@@ -46,3 +54,26 @@ class TactillManager(POSManagerProtocol):
             for article in articles
             if article.full_price is not None and article.stock_quantity is not None
         ]
+
+    async def create_article(
+        self,
+        category_id: str,
+        tax_id: str,
+        price: Decimal,
+        article: Article,
+    ) -> RawArticle:
+        article_create = ArticleCreate(
+            category_id=category_id,
+            taxes=[tax_id],
+            name=article.name,
+            icon_text="    ",
+            color=TactillColor.GREEN,
+            full_price=price,
+            reference=article.id.hex,
+        )
+        try:
+            result = await self.client.articles.create(data=article_create)
+        except TactillError as error:
+            raise POSError(str(error)) from error
+
+        return RawArticle.model_validate(result.model_dump())

@@ -1,4 +1,3 @@
-from cleanstack import FilterEntity, PaginatedResponse, Pagination, SortEntity
 from cleanstack.mongo import AsyncMongoRepository, MongoDocument
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
@@ -23,19 +22,10 @@ class StoreRepository(StoreRepositoryProtocol):
             session=session,
         )
 
-    async def get_all(
-        self,
-        search: str | None = None,
-        filters: list[FilterEntity] | None = None,
-        sort: list[SortEntity] | None = None,
-        pagination: Pagination | None = None,
-    ) -> PaginatedResponse[Store]:
-        return await self.repository.get_all(
-            search=search,
-            filters=filters,
-            sort=sort,
-            pagination=pagination,
-        )
+    async def get_all(self) -> list[Store]:
+        cursor = self.repository.collection.find()
+        items = await cursor.to_list()
+        return [self.repository.to_domain_entity(item) for item in items]
 
     async def get_by_slug(self, slug: str) -> Store | None:
         result = await self.repository.collection.find_one({"slug": slug})

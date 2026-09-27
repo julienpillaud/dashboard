@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+
+.p-inputtext.p-filled:enabled:not(.p-invalid),
+.p-textarea.p-filled:enabled:not(.p-invalid),
+.p-select.p-inputwrapper-filled:not(.p-invalid):not(.p-disabled) {
+  border-color: var(--p-primary-500);
+}

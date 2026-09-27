@@ -8,7 +8,7 @@ from app.api.app import create_fastapi_app
 from app.api.dependencies.app import get_context_provider, get_settings
 from app.core.settings import Settings
 from app.domain.security import generate_access_token
-from tests.fakes.context import ContextProviderOverride, FakeContextProvider
+from tests.mocks.context import ContextProviderOverride, MockContextProvider
 from tests.plugins.settings import SettingsOverride
 from tests.plugins.users import TestUser
 
@@ -22,7 +22,7 @@ def token(user: TestUser, settings: Settings) -> str:
 
 
 @pytest.fixture(scope="session")
-def app(settings: Settings, context_provider: FakeContextProvider) -> FastAPI:
+def app(settings: Settings, context_provider: MockContextProvider) -> FastAPI:
     app = create_fastapi_app(settings=settings)
     app.dependency_overrides[get_settings] = SettingsOverride(settings=settings)
     app.dependency_overrides[get_context_provider] = ContextProviderOverride(

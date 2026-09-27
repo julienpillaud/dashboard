@@ -1,4 +1,5 @@
 from cleanstack import BaseEntity
+from pydantic import BaseModel
 
 from app.domain.entities import BaseRawEntity
 
@@ -8,6 +9,18 @@ class RawCategory(BaseRawEntity):
     color: str
 
 
+class CategoryFields(BaseModel):
+    origin: bool
+    color: bool
+    taste: bool
+    volume: bool
+    alcohol_by_volume: bool
+    deposit_unit: bool
+    deposit_crate: bool
+    deposit_packaging: bool
+
+
 class Category(BaseEntity):
     name: str
-    store_mapping: dict[str, RawCategory]
+    fields: CategoryFields
+    store_mapping: dict[str, RawCategory]  # key is str(store.id)

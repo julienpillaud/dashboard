@@ -1,19 +1,18 @@
 from typing import Annotated
 
 from cleanstack import FilterEntity, PaginatedResponse, Pagination
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies.app import get_domain
-from app.api.dependencies.user import get_current_user
 from app.api.filters import get_filters
 from app.core.domain import Domain
-from app.domain.articles.entities import Article
-from app.domain.articles.use_cases import get_articles
+from app.domain.articles.entities import Article, ArticleCreate
+from app.domain.articles.use_cases import create_article, get_articles
 
 router = APIRouter(
     prefix="/articles",
     tags=["Articles"],
-    dependencies=[Depends(get_current_user)],
+    # dependencies=[Depends(get_current_user)],
 )
 
 
@@ -24,3 +23,11 @@ async def get_articles_endpoint(
     pagination: Annotated[Pagination, Depends()],
 ) -> PaginatedResponse[Article]:
     return await domain.run(get_articles, filters=filters, pagination=pagination)
+
+
+@router.post("", status_code=status.HTTP_201_CREATED, summary="Create article")
+async def create_article_endpoint(
+    domain: Annotated[Domain, Depends(get_domain)],
+    data: ArticleCreate,
+) -> Article:
+    return await domain.run(create_article, data=data)

@@ -4,8 +4,8 @@ import httpx2
 import pytest
 
 from app.core.settings import Settings
-from tests.fakes.context import FakeContextProvider
-from tests.fakes.pos_manager import FakePOSManager
+from tests.mocks.context import MockContextProvider
+from tests.mocks.pos_manager import FakePOSManager
 
 
 @pytest.fixture(scope="session")
@@ -23,8 +23,8 @@ def _reset_fake_pos_manager(fake_pos_manager: FakePOSManager) -> Iterator[None]:
 def context_provider(
     settings: Settings,
     fake_pos_manager: FakePOSManager,
-) -> FakeContextProvider:
-    return FakeContextProvider(
+) -> MockContextProvider:
+    return MockContextProvider(
         settings=settings,
         http_client=httpx2.AsyncClient(),
         pos_manager=fake_pos_manager,

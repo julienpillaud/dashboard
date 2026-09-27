@@ -1,5 +1,6 @@
 .idea/
 .env
+.env.preprod
 
 # Backend
 backend/.venv/

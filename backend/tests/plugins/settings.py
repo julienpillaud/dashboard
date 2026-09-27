@@ -2,7 +2,7 @@ import secrets
 
 import pytest
 
-from app.core.settings import Settings
+from app.core.settings import AppEnvironment, Settings
 
 
 class SettingsOverride:
@@ -16,9 +16,8 @@ class SettingsOverride:
 @pytest.fixture(scope="session")
 def settings() -> Settings:
     return Settings(
+        environment=AppEnvironment.TESTING,
         secret_key=secrets.token_urlsafe(32),
-        access_token_expire=60,
-        refresh_token_expire=120,
         mongo_user="user",
         mongo_password="password",
         mongo_host="localhost",

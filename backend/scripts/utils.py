@@ -11,6 +11,7 @@ from app.domain.articles.entities import (
     ArticleVolume,
     VolumeUnit,
 )
+from app.domain.origins.entities import Origin
 
 
 def empty_to_none(value: Any) -> Any | None:  # noqa: ANN401
@@ -54,13 +55,15 @@ def fetch_codes() -> dict[str, str]:
     return {v: k for k, v in response.json().items()}
 
 
-def get_origin(value: Any) -> ArticleOrigin | None:  # noqa: ANN401
+def get_origin(
+    value: Any,  # noqa: ANN401
+    origins_map: dict[str, Origin],
+) -> ArticleOrigin | None:
     if not value:
         return None
 
-    codes = fetch_codes()
-    code = codes.get(value)
-    return ArticleOrigin(name=value, code=code)
+    origin = origins_map[value]
+    return ArticleOrigin(name=origin.name, code=origin.code)
 
 
 def to_decimal(value: float) -> Decimal:

@@ -1,0 +1,10 @@
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env.preprod
+    restart: unless-stopped

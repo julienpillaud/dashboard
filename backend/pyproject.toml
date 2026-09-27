@@ -9,23 +9,23 @@ dependencies = [
     "itsdangerous==2.2.0",
     "pwdlib[argon2]==0.3.1",
     "pydantic-settings==2.15.0",
-    "pyjwt==2.13.0",
-    "pymongo==4.17.0",
+    "pyjwt==2.15.0",
+    "pymongo==4.18.2",
     "tactill",
 ]
 
 [dependency-groups]
 dev = [
-    "faker==40.38.0",
+    "faker==40.39.0",
     "mypy==2.3.1",
     "pytest==9.1.1",
-    "ruff==0.16.6",
-    "ty==0.0.79",
+    "ruff==0.16.9",
+    "ty==0.0.84",
 ]
 
 [tool.uv.sources]
 cleanstack = { git = "https://github.com/julienpillaud/cleanstack.git", tag = "0.31.1" }
-tactill = { git = "https://github.com/julienpillaud/tactill.git", tag = "0.17.0" }
+tactill = { git = "https://github.com/julienpillaud/tactill.git", tag = "0.19.0" }
 
 [tool.ruff]
 output-format = "concise"
