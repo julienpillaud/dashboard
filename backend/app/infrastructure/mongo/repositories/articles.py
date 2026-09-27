@@ -89,6 +89,9 @@ class ArticleRepository(ArticleRepositoryProtocol):
             pagination=pagination,
         )
 
+    async def save(self, entity: Article) -> None:
+        await self.repository.save(entity)
+
     async def count(self, filters: list[FilterEntity] | None = None) -> int:
         count_pipeline = [*self.repository.filters_stage(filters), {"$count": "total"}]
         count_cursor = await self.repository.collection.aggregate(

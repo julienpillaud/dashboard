@@ -7,6 +7,9 @@ dev:
 dev-down:
     docker compose -f compose-dev.yaml down
 
+preprod:
+    docker compose -f compose-preprod.yaml up -d --build
+
 [working-directory('backend')]
 lint:
     uv run ruff check --fix || true

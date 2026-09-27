@@ -6,7 +6,7 @@ from cleanstack.mongo import MongoDocument, SyncMongoRepository
 from pymongo.synchronous.client_session import ClientSession
 from pymongo.synchronous.database import Database
 
-from app.domain.categories.entities import Category, RawCategory
+from app.domain.categories.entities import Category, CategoryFields, RawCategory
 from app.domain.stores.entities import Store
 from tests.factories.fake import faker
 from tests.factories.stores import StoreFactory
@@ -41,10 +41,24 @@ def generate_raw_category(**kwargs: Any) -> RawCategory:  # noqa: ANN401
     )
 
 
+def generate_category_fields(**kwargs: Any) -> CategoryFields:  # noqa: ANN401
+    return CategoryFields(
+        origin=kwargs.get("origin", faker.boolean()),
+        color=kwargs.get("color", faker.boolean()),
+        taste=kwargs.get("taste", faker.boolean()),
+        volume=kwargs.get("volume", faker.boolean()),
+        alcohol_by_volume=kwargs.get("alcohol_by_volume", faker.boolean()),
+        deposit_unit=kwargs.get("deposit_unit", faker.boolean()),
+        deposit_crate=kwargs.get("deposit_crate", faker.boolean()),
+        deposit_packaging=kwargs.get("deposit_packaging", faker.boolean()),
+    )
+
+
 def generate_category(*, stores: list[Store], **kwargs: Any) -> Category:  # noqa: ANN401
     return Category(
         id=uuid.uuid7(),
         name=kwargs.get("name", faker.word()),
+        fields=generate_category_fields(**kwargs),
         store_mapping={
             str(store.id): generate_raw_category(**kwargs) for store in stores
         },

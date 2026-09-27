@@ -9,4 +9,4 @@ class RawTax(BaseRawEntity):
 
 class Tax(BaseEntity):
     rate: float
-    store_mapping: dict[str, RawTax]
+    store_mapping: dict[str, RawTax]  # key is store id

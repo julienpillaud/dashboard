@@ -1,9 +1,26 @@
 from collections.abc import AsyncIterator
+from decimal import Decimal
 from typing import Protocol
 
-from app.domain.articles.entities import RawArticle
+from app.domain.articles.entities import Article, RawArticle
 from app.domain.categories.entities import RawCategory
 from app.domain.taxes.entities import RawTax
+
+
+class POSError(Exception):
+    pass
+
+
+class POSRejectedError(POSError):
+    pass
+
+
+class POSUnavailableError(POSError):
+    pass
+
+
+class POSUnexpectedResponseError(POSError):
+    pass
 
 
 class POSManagerProtocol(Protocol):
@@ -24,6 +41,14 @@ class POSManagerProtocol(Protocol):
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawArticle]: ...
+
+    async def create_article(
+        self,
+        category_id: str,
+        tax_id: str,
+        price: Decimal,
+        article: Article,
+    ) -> RawArticle: ...
 
 
 class PDFConverterProtocol(Protocol):

@@ -1,0 +1,23 @@
+# Exclude all
+*
+
+# Backend
+!backend/uv.lock
+!backend/pyproject.toml
+
+!backend/app/
+backend/app/**/__pycache__
+
+
+# Frontend
+!frontend/bun.lock
+!frontend/package.json
+
+!frontend/vite.config.ts
+!frontend/tsconfig.json
+!frontend/tsconfig.app.json
+!frontend/tsconfig.node.json
+
+!frontend/index.html
+!frontend/src/
+!frontend/public/

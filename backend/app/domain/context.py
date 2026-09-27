@@ -3,6 +3,8 @@ from typing import Protocol
 from app.domain.articles.repository import ArticleRepositoryProtocol
 from app.domain.categories.repository import CategoryRepositoryProtocol
 from app.domain.inventories.repository import InventoryRepositoryProtocol
+from app.domain.origins.repository import OriginRepositoryProtocol
+from app.domain.pricing.repository import PricingRuleRepositoryProtocol
 from app.domain.protocols import POSManagerProtocol
 from app.domain.refresh_tokens.repository import RefreshTokenRepositoryProtocol
 from app.domain.stores.entities import Store
@@ -28,9 +30,15 @@ class ContextProtocol(Protocol):
     def category_repository(self) -> CategoryRepositoryProtocol: ...
 
     @property
+    def pricing_rules_repository(self) -> PricingRuleRepositoryProtocol: ...
+
+    @property
+    def origin_repository(self) -> OriginRepositoryProtocol: ...
+
+    @property
     def article_repository(self) -> ArticleRepositoryProtocol: ...
 
     @property
     def inventory_repository(self) -> InventoryRepositoryProtocol: ...
 
-    def get_pos_manager(self, store: Store) -> POSManagerProtocol: ...
+    async def get_pos_manager(self, store: Store) -> POSManagerProtocol: ...

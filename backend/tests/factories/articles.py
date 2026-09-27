@@ -1,3 +1,4 @@
+import random
 import uuid
 from typing import Any
 
@@ -8,12 +9,12 @@ from pymongo.synchronous.database import Database
 
 from app.domain.articles.entities import (
     Article,
-    ArticleData,
     ArticleDeposit,
     ArticleDetails,
     ArticleOrigin,
     ArticleVolume,
     PosArticle,
+    POSStatus,
     RawArticle,
     VolumeUnit,
 )
@@ -77,36 +78,19 @@ def generate_article_origin(**kwargs: Any) -> ArticleOrigin:  # noqa: ANN401
 
 def generate_article_details(**kwargs: Any) -> ArticleDetails:  # noqa: ANN401
     return ArticleDetails(
-        alcohol_by_volume=kwargs.get(
-            "alcohol_by_volume",
-            faker.pyfloat(min_value=0, max_value=100) if faker.boolean() else None,
-        ),
-        volume=kwargs.get(
-            "volume",
-            generate_article_volume() if faker.boolean() else None,
-        ),
         origin=kwargs.get(
             "origin",
             generate_article_origin() if faker.boolean() else None,
         ),
         color=kwargs.get("color", faker.color_name() if faker.boolean() else None),
         taste=kwargs.get("taste", faker.word() if faker.boolean() else None),
-        distributor=kwargs.get(
-            "distributor",
-            faker.company() if faker.boolean() else None,
+        volume=kwargs.get(
+            "volume",
+            generate_article_volume() if faker.boolean() else None,
         ),
-    )
-
-
-def generate_article_data(**kwargs: Any) -> ArticleData:  # noqa: ANN401
-    return ArticleData(
-        details=kwargs.get(
-            "details",
-            generate_article_details() if faker.boolean() else None,
-        ),
-        total_cost=kwargs.get(
-            "total_cost",
-            faker.pydecimal(right_digits=4, positive=True),
+        alcohol_by_volume=kwargs.get(
+            "alcohol_by_volume",
+            faker.pyfloat(min_value=0, max_value=100) if faker.boolean() else None,
         ),
         deposit=kwargs.get(
             "deposit",
@@ -155,15 +139,25 @@ def generate_article(
         id=uuid.uuid7(),
         name=kwargs.get("name", faker.word()),
         category=category.name,
+        total_cost=kwargs.get(
+            "total_cost",
+            faker.pydecimal(right_digits=4, positive=True, max_value=200),
+        ),
         tax_rate=tax.rate,
-        data=generate_article_data(**kwargs),
+        distributor=kwargs.get(
+            "distributor",
+            faker.company() if faker.boolean() else None,
+        ),
+        details=generate_article_details(**kwargs),
         store_mapping={
             str(store.id): PosArticle(
                 store_name=store.name,
                 price=kwargs.get(
-                    "price", faker.pydecimal(right_digits=4, positive=True)
+                    "price", faker.pydecimal(right_digits=2, positive=True)
                 ),
+                status=kwargs.get("status", random.choice(list(POSStatus))),
                 raw=generate_raw_article(**kwargs),
+                error=kwargs.get("error", faker.text() if faker.boolean() else None),
             )
             for store in stores
         },

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated
 
@@ -5,6 +6,7 @@ from cleanstack import BaseEntity
 from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
 
 from app.domain.entities import BaseRawEntity, DateTime, DecimalType
+from app.domain.stores.entities import Store
 
 
 class RawArticle(BaseRawEntity):
@@ -29,43 +31,76 @@ class ArticleVolume(BaseModel):
     unit: VolumeUnit
 
 
+class ArticleOrigin(BaseModel):
+    name: str
+    code: str | None = None
+
+
 class ArticleDeposit(BaseModel):
     unit: Annotated[DecimalType, Field(gt=0, decimal_places=2)]
     crate: Annotated[DecimalType, Field(gt=0, decimal_places=2)] | None
     packaging: PositiveInt | None
 
 
-class ArticleOrigin(BaseModel):
-    name: str
-    code: str | None = None
-
-
 class ArticleDetails(BaseModel):
-    alcohol_by_volume: float | None
-    volume: ArticleVolume | None
     origin: ArticleOrigin | None
     color: str | None
     taste: str | None
-    distributor: str | None
-
-
-class ArticleData(BaseModel):
-    details: ArticleDetails | None
-    total_cost: Annotated[DecimalType, Field(gt=0, decimal_places=4)]
+    volume: ArticleVolume | None
+    alcohol_by_volume: float | None
     deposit: ArticleDeposit | None
+
+
+class POSStatus(StrEnum):
+    CREATED = "created"
+    FAILED = "failed"
 
 
 class PosArticle(BaseModel):
     store_name: str
-    price: float
+    price: Annotated[DecimalType, Field(gt=0, decimal_places=2)]
+    status: POSStatus
     raw: RawArticle | None
+    error: str | None
 
 
 class Article(BaseEntity):
     name: str
     category: str
+    total_cost: Annotated[DecimalType, Field(gt=0, decimal_places=4)]
     tax_rate: float
-    data: ArticleData
-    store_mapping: dict[str, PosArticle]
+    distributor: str | None
+    details: ArticleDetails
+    store_mapping: dict[str, PosArticle] = Field(default_factory=dict)
     created_at: DateTime
     updated_at: DateTime
+
+    def add_store_result(
+        self,
+        store: Store,
+        price: Decimal,
+        result: POSCreationResult,
+    ) -> None:
+        self.store_mapping[str(store.id)] = PosArticle(
+            store_name=store.name,
+            price=price,
+            status=result.status,
+            raw=result.raw,
+            error=result.error,
+        )
+
+
+class ArticleCreate(BaseModel):
+    name: str
+    category: str
+    total_cost: Annotated[DecimalType, Field(gt=0, decimal_places=4)]
+    tax_rate: float
+    distributor: str | None
+    details: ArticleDetails
+    price: Annotated[DecimalType, Field(gt=0, decimal_places=2)]
+
+
+class POSCreationResult(BaseModel):
+    status: POSStatus
+    raw: RawArticle | None
+    error: str | None

@@ -13,7 +13,7 @@ async def get_old_stores(context: Context) -> list[MongoDocument]:
     return await cursor.to_list()
 
 
-async def migrate_stores(context: Context, dry_run: bool) -> None:
+async def migrate_stores(context: Context, /, dry_run: bool) -> None:
     old_stores = await get_old_stores(context=context)
     stores = [
         Store(

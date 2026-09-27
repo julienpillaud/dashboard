@@ -50,6 +50,7 @@ def get_context_provider(
     return ContextProvider(
         settings=settings,
         http_client=request.app.state.http_client,
+        tactill_factory=request.app.state.tactill_factory,
     )
 
 

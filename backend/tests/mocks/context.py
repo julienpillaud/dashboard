@@ -6,10 +6,11 @@ from app.core.settings import Settings
 from app.domain.protocols import POSManagerProtocol
 from app.domain.stores.entities import Store
 from app.infrastructure.mongo.resource.asynchronous import MongoTransaction
-from tests.fakes.pos_manager import FakePOSManager
+from app.infrastructure.tactill.factory import TactillClientFactory
+from tests.mocks.pos_manager import FakePOSManager
 
 
-class FakeContext(Context):
+class MockContext(Context):
     def __init__(
         self,
         settings: Settings,
@@ -20,15 +21,16 @@ class FakeContext(Context):
         super().__init__(
             settings=settings,
             http_client=http_client,
+            tactill_factory=TactillClientFactory(http_client),
             transaction=transaction,
         )
         self._pos_manager = pos_manager
 
-    def get_pos_manager(self, store: Store) -> POSManagerProtocol:
+    async def get_pos_manager(self, store: Store) -> POSManagerProtocol:
         return self._pos_manager
 
 
-class FakeContextProvider:
+class MockContextProvider:
     def __init__(
         self,
         settings: Settings,
@@ -39,11 +41,11 @@ class FakeContextProvider:
         self._http_client = http_client
         self._pos_manager = pos_manager
 
-    def __call__(self, transaction: TransactionProtocol) -> FakeContext:
+    def __call__(self, transaction: TransactionProtocol) -> MockContext:
         if not isinstance(transaction, MongoTransaction):
             raise RuntimeError()
 
-        return FakeContext(
+        return MockContext(
             settings=self._settings,
             http_client=self._http_client,
             transaction=transaction,
@@ -52,8 +54,8 @@ class FakeContextProvider:
 
 
 class ContextProviderOverride:
-    def __init__(self, context_provider: FakeContextProvider) -> None:
+    def __init__(self, context_provider: MockContextProvider) -> None:
         self.context_provider = context_provider
 
-    def __call__(self) -> FakeContextProvider:
+    def __call__(self) -> MockContextProvider:
         return self.context_provider

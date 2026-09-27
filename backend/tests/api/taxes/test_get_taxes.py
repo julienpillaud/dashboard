@@ -12,4 +12,4 @@ def test_get_taxes(factory: Factory, client: TestClient) -> None:
 
     assert response.status_code == status.HTTP_200_OK
     result = response.json()
-    assert len(result["items"]) == taxes_count
+    assert len(result) == taxes_count
