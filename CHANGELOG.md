@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/julienpillaud/dashboard/compare/0.8.0...0.9.0) (2026-09-27)
+
+
+### Features
+
+* big update ([#23](https://github.com/julienpillaud/dashboard/issues/23)) ([e530ae7](https://github.com/julienpillaud/dashboard/commit/e530ae7720e632d44912329c5d49eb8a9d89c415))
+* refactor for v2 ([#21](https://github.com/julienpillaud/dashboard/issues/21)) ([98098cf](https://github.com/julienpillaud/dashboard/commit/98098cfe424556c9aa3a38b4c5635c6edfa7678b))
+
 ## [0.8.0](https://github.com/julienpillaud/dashboard/compare/0.7.0...0.8.0) (2026-09-10)
 
 
