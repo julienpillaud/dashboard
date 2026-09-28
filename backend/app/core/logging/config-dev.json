@@ -10,6 +10,9 @@
     "console": {
       "class": "logging.StreamHandler",
       "formatter": "colored"
+    },
+    "logfire": {
+      "class": "logfire.LogfireLoggingHandler"
     }
   },
   "loggers": {
@@ -22,6 +25,9 @@
     "pymongo": {
       "level": "INFO"
     },
+    "urllib3": {
+      "level": "INFO"
+    },
     "uvicorn.error": {
       "level": "WARNING"
     },
@@ -32,7 +38,8 @@
   "root": {
     "level": "DEBUG",
     "handlers": [
-      "console"
+      "console",
+      "logfire"
     ]
   }
 }

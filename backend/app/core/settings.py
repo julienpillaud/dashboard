@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     api_prefix: str = "/api"
     http_client_timeout: int = 10
 
+    logfire_token: str | None = None
     secret_key: str
     jwt_algorithm: str = "HS256"
     access_token_expire: int = 15 * 60  # 15 minutes

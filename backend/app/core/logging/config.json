@@ -11,6 +11,9 @@
     "console": {
       "class": "logging.StreamHandler",
       "formatter": "standard"
+    },
+    "logfire": {
+      "class": "logfire.LogfireLoggingHandler"
     }
   },
   "loggers": {
@@ -18,7 +21,8 @@
   "root": {
     "level": "INFO",
     "handlers": [
-      "console"
+      "console",
+      "logfire"
     ]
   }
 }
