@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/julienpillaud/dashboard/compare/0.9.0...0.10.0) (2026-09-28)
+
+
+### Features
+
+* add logfire ([#24](https://github.com/julienpillaud/dashboard/issues/24)) ([5687393](https://github.com/julienpillaud/dashboard/commit/5687393c5a923c34aa632fbb19cf1bbde7f46ef0))
+
 ## [0.9.0](https://github.com/julienpillaud/dashboard/compare/0.8.0...0.9.0) (2026-09-27)
 
 
