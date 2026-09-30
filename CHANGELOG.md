@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/julienpillaud/dashboard/compare/0.10.0...0.11.0) (2026-09-30)
+
+
+### Features
+
+* add search ([#26](https://github.com/julienpillaud/dashboard/issues/26)) ([11a7920](https://github.com/julienpillaud/dashboard/commit/11a7920e560d24056000a7a286bba92c8dab8cdd))
+
 ## [0.10.0](https://github.com/julienpillaud/dashboard/compare/0.9.0...0.10.0) (2026-09-28)
 
 
