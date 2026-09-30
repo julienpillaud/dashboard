@@ -9,6 +9,7 @@
         "vue-router": "5.2.0",
       },
       "devDependencies": {
+        "@openvue/openicons": "^1.0.0",
         "@openvue/themes": "^1.0.0",
         "@tailwindcss/vite": "4.3.3",
         "@tsconfig/node24": "24.0.4",
@@ -155,6 +156,8 @@
     "@openvue/core": ["@openvue/core@1.0.0", "", { "dependencies": { "@openuxkit/styled": "^1.0.0", "@openuxkit/styles": "^1.1.0", "@openuxkit/utils": "^1.0.0" }, "peerDependencies": { "vue": "^3.5.0" } }, "sha512-cVgUD4gSTboMi+zM55fSNxeqrmGlECdrh5oYfZDFx7BwPgvgdZgDKTrIp2/pjiUoxracD+zlS2KYTyw96aai3Q=="],
 
     "@openvue/icons": ["@openvue/icons@1.0.0", "", { "dependencies": { "@openuxkit/utils": "^1.0.0", "@openvue/core": "1.0.0" } }, "sha512-xCBcHvs0SjEqrDkL54cwcSKUYkjbAPPbfISfygoxjkE/yibUGk3STyutVsGTAEeV5BIYmK/Hd4eUMN/FOTcsfw=="],
+
+    "@openvue/openicons": ["@openvue/openicons@1.0.0", "", {}, "sha512-ZRV8Xt8y7oIYPQjtFiBf2UfxSzsjXcbPEZvvI9364T+F5BGxcP8EboO9ZLMxMRl2RCfFyBYs3XYiYGMLUMlNvA=="],
 
     "@openvue/themes": ["@openvue/themes@1.0.0", "", { "dependencies": { "@openuxkit/styled": "^1.0.0", "@openuxkit/themes": "^1.1.0" } }, "sha512-YiLHzoa+0ic5yz/+vljDaH3UWNofgu5JLENq2FPMY+rPJD9L2F+/QumvUj7vUHvPIFexnb35FwM6fpetw6BfiA=="],
 

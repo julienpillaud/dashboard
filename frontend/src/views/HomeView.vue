@@ -9,23 +9,50 @@ import ArticleFormDialog from '@/components/ArticleFormDialog.vue'
 import type { Volume } from '@/types/volumes'
 import type { DataTablePageEvent } from 'openvue/datatable'
 import type { Article } from '@/types/articles'
+import IconField from 'openvue/iconfield'
+import InputIcon from 'openvue/inputicon'
+import InputText from 'openvue/inputtext'
 
 // State
 const articles = ref<Article[]>([])
 const pageSize = ref(50)
 const total = ref()
 const dialogVisible = ref(false)
+const search = ref('')
+const first = ref(0)
 
 // Functions
 const fetchArticles = async (page = 0) => {
   const response = await api.get('/articles', {
-    params: { page: page + 1, size: pageSize.value },
+    params: {
+      page: page + 1,
+      size: pageSize.value,
+      search: search.value.trim() || undefined,
+    },
   })
   articles.value = response.data.items
   total.value = response.data.total
 }
 
+let searchTimeout: ReturnType<typeof setTimeout>
+
+const onSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    first.value = 0
+    fetchArticles(0)
+  }, 100)
+}
+
+const clearSearch = () => {
+  search.value = ''
+  clearTimeout(searchTimeout)
+  first.value = 0
+  fetchArticles(0)
+}
+
 const onPageChange = async (event: DataTablePageEvent): Promise<void> => {
+  first.value = event.first
   fetchArticles(event.page)
 }
 
@@ -46,8 +73,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <nav class="flex bg-slate-100 shadow-sm sticky top-0 z-10 px-6 py-3">
-    <Button label="Nouveau" class="ml-auto" @click="dialogVisible = true" />
+  <nav
+    class="grid grid-cols-[1fr_auto_1fr] items-center bg-slate-100 shadow-sm sticky top-0 z-10 px-6 py-3"
+  >
+    <div></div>
+    <IconField>
+      <InputIcon class="oi oi-search" />
+      <InputText v-model="search" placeholder="Rechercher…" @input="onSearch" />
+      <InputIcon v-show="search" class="oi oi-times cursor-pointer" @click="clearSearch" />
+    </IconField>
+    <div class="flex justify-end">
+      <Button label="Nouveau" @click="dialogVisible = true" />
+    </div>
   </nav>
 
   <main class="px-6 py-6">
@@ -58,6 +95,7 @@ onMounted(() => {
       paginatorPosition="both"
       lazy
       :rows="pageSize"
+      :first="first"
       :totalRecords="total"
       @page="onPageChange"
     >

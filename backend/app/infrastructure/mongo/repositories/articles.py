@@ -1,3 +1,5 @@
+import re
+import unicodedata
 import uuid
 from typing import Any
 
@@ -18,10 +20,41 @@ from pymongo.asynchronous.database import AsyncDatabase
 from app.domain.articles.entities import Article
 from app.domain.articles.repository import ArticleRepositoryProtocol
 
+ACCENT_VARIANTS = {
+    "a": "aàâäáãå",
+    "c": "cç",
+    "e": "eéèêë",
+    "i": "iîïíì",
+    "n": "nñ",
+    "o": "oôöóòõ",
+    "u": "uùûüú",
+    "y": "yÿý",
+}
 ALLOWED_FILTERS = ["store_id", "category", "raw.name", "status"]
 
 
+def accent_insensitive_pattern(text: str) -> str:
+    decomposed = unicodedata.normalize("NFD", text)
+    base = "".join(c for c in decomposed if not unicodedata.combining(c))
+    parts = []
+    for char in base:
+        variants = ACCENT_VARIANTS.get(char.lower())
+        parts.append(f"[{variants}{variants.upper()}]" if variants else re.escape(char))
+    return "".join(parts)
+
+
 class ArticleMongoAdapter(AsyncMongoRepository[Article]):
+    def search_stage(self, search: str | None) -> list[MongoDocument]:
+        if not search or not search.strip():
+            return []
+
+        pattern = accent_insensitive_pattern(search.strip())
+        conditions = [
+            {field: {"$regex": pattern, "$options": "i"}}
+            for field in self.searchable_fields
+        ]
+        return [{"$match": {"$or": conditions}}]
+
     def filters_stage(self, filters: list[FilterEntity] | None) -> list[MongoDocument]:
         if not filters:
             return []
@@ -62,7 +95,14 @@ class ArticleMongoAdapter(AsyncMongoRepository[Article]):
 class ArticleRepository(ArticleRepositoryProtocol):
     domain_entity_type = Article
     collection_name = "articles"
-    searchable_fields = ()
+    searchable_fields = (
+        "name",
+        "category",
+        "distributor",
+        "details.origin.name",
+        "details.color",
+        "details.taste",
+    )
 
     def __init__(
         self,

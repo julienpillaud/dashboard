@@ -31,10 +31,12 @@ from app.domain.taxes.entities import Tax
 async def get_articles(
     context: ContextProtocol,
     /,
+    search: str | None = None,
     filters: list[FilterEntity] | None = None,
     pagination: Pagination | None = None,
 ) -> PaginatedResponse[Article]:
     return await context.article_repository.get_all(
+        search=search,
         filters=filters,
         sort=[
             SortEntity(field="category", order=SortOrder.ASC),

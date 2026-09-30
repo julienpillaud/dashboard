@@ -19,6 +19,7 @@
     "vue-router": "5.2.0"
   },
   "devDependencies": {
+    "@openvue/openicons": "^1.0.0",
     "@openvue/themes": "^1.0.0",
     "@tailwindcss/vite": "4.3.3",
     "@tsconfig/node24": "24.0.4",
