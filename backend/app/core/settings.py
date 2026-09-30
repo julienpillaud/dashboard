@@ -50,8 +50,9 @@ class Settings(BaseSettings):
     mongo_database: str
     supports_transactions: bool = True
     mongo_local: bool = False
+    legacy_uri: str | None = None
 
-    gotenberg_host: str
+    gotenberg_host: str = ""
 
     @computed_field
     @property
@@ -78,6 +79,9 @@ class Settings(BaseSettings):
     def mongo_uri(self) -> str:
         if self.mongo_local:
             return "mongodb://localhost:27017?replicaSet=rs0"
+
+        if self.legacy_uri:
+            return self.legacy_uri
 
         pattern = "mongodb+srv://{user}:{password}@{host}"
         return pattern.format(
