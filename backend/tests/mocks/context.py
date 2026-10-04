@@ -1,11 +1,10 @@
 import httpx2
 
 from app.core.context import Context
-from app.core.domain import TransactionProtocol
-from app.core.settings import Settings
+from app.core.protocols import UnitOfWorkProtocol
 from app.domain.protocols import POSManagerProtocol
 from app.domain.stores.entities import Store
-from app.infrastructure.mongo.resource.asynchronous import MongoTransaction
+from app.infrastructure.mongo.uow import MongoUnitOfWork
 from app.infrastructure.tactill.factory import TactillClientFactory
 from tests.mocks.pos_manager import FakePOSManager
 
@@ -13,16 +12,13 @@ from tests.mocks.pos_manager import FakePOSManager
 class MockContext(Context):
     def __init__(
         self,
-        settings: Settings,
         http_client: httpx2.AsyncClient,
-        transaction: MongoTransaction,
+        uow: MongoUnitOfWork,
         pos_manager: FakePOSManager,
     ) -> None:
         super().__init__(
-            settings=settings,
-            http_client=http_client,
+            uow=uow,
             tactill_factory=TactillClientFactory(http_client),
-            transaction=transaction,
         )
         self._pos_manager = pos_manager
 
@@ -33,23 +29,20 @@ class MockContext(Context):
 class MockContextProvider:
     def __init__(
         self,
-        settings: Settings,
         http_client: httpx2.AsyncClient,
         pos_manager: FakePOSManager,
     ) -> None:
-        self._settings = settings
-        self._http_client = http_client
-        self._pos_manager = pos_manager
+        self.http_client = http_client
+        self.pos_manager = pos_manager
 
-    def __call__(self, transaction: TransactionProtocol) -> MockContext:
-        if not isinstance(transaction, MongoTransaction):
+    def __call__(self, uow: UnitOfWorkProtocol) -> MockContext:
+        if not isinstance(uow, MongoUnitOfWork):
             raise RuntimeError()
 
         return MockContext(
-            settings=self._settings,
-            http_client=self._http_client,
-            transaction=transaction,
-            pos_manager=self._pos_manager,
+            http_client=self.http_client,
+            uow=uow,
+            pos_manager=self.pos_manager,
         )
 
 

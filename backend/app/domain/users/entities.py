@@ -1,15 +1,15 @@
 from cleanstack import BaseEntity, EntityId
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class User(BaseEntity):
-    name: str
+    email: EmailStr
     hashed_password: str
 
 
 class UserExternal(BaseModel):
     id: EntityId
-    name: str
+    email: EmailStr
 
 
 class UserSession(BaseModel):

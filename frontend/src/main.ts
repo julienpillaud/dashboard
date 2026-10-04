@@ -4,6 +4,7 @@ import '@openvue/openicons/openicons.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import { createPinia } from 'pinia'
 
 import OpenVue from 'openvue/config'
 import { definePreset } from '@openvue/themes'
@@ -11,6 +12,7 @@ import Aura from '@openvue/themes/aura'
 
 const app = createApp(App)
 
+app.use(createPinia())
 app.use(router)
 
 const MyPreset = definePreset(Aura, {

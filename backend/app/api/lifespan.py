@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from app.core.logger import logger
 from app.core.settings import Settings
-from app.infrastructure.mongo.resource.asynchronous import MongoResource
+from app.infrastructure.mongo.resource import MongoResource
 from app.infrastructure.tactill.factory import TactillClientFactory
 
 

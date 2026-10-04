@@ -5,7 +5,7 @@ from app.domain.articles.entities import ArticleCreate
 from tests.factories.factory import Factory
 
 
-def test_create_article(factory: Factory, client: TestClient) -> None:
+def test_create_article(factory: Factory, tokens: None, client: TestClient) -> None:
     data = factory.articles.build()
     article_create = ArticleCreate(
         name=data.name,

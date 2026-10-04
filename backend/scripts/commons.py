@@ -7,10 +7,8 @@ import httpx2
 
 from app.core.context import Context
 from app.core.settings import Settings
-from app.infrastructure.mongo.resource.asynchronous import (
-    MongoResource,
-    MongoTransaction,
-)
+from app.infrastructure.mongo.resource import MongoResource
+from app.infrastructure.mongo.uow import MongoUnitOfWork
 from app.infrastructure.tactill.factory import TactillClientFactory
 
 logger = logging.getLogger("app.migration")
@@ -41,11 +39,8 @@ def get_settings(database: str) -> Settings:
 async def get_context(database: str) -> Context:
     settings = get_settings(database=database)
     http_client = httpx2.AsyncClient(timeout=settings.http_client_timeout)
-    mongo_resource = await MongoResource.from_settings(settings)
-    mongo_transaction = MongoTransaction(mongo_resource)
+    resource = await MongoResource.from_settings(settings)
     return Context(
-        settings=settings,
-        http_client=http_client,
+        uow=MongoUnitOfWork(resource),
         tactill_factory=TactillClientFactory(http_client=http_client),
-        transaction=mongo_transaction,
     )

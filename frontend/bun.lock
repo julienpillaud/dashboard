@@ -27,6 +27,7 @@
         "openvue": "^1.0.0",
         "oxfmt": "0.59.0",
         "oxlint": "1.74.0",
+        "pinia": "^4.0.3",
         "tailwindcss": "4.3.3",
         "typescript": "6.0.3",
         "vite": "8.1.5",
@@ -702,6 +703,8 @@
     "picomatch": ["picomatch@4.0.7", "", {}, "sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA=="],
 
     "pidtree": ["pidtree@1.0.0", "", { "bin": { "pidtree": "bin/pidtree.js" } }, "sha512-avfAvjB9Dd0wdj3rjJX//yS+G79OO0KrS5pJHFJENjYGX6N4SMgEDBBI/yFy0lloOYSaC6XQxzpOAMPfSYFV/Q=="],
+
+    "pinia": ["pinia@4.0.3", "", { "dependencies": { "nostics": "^1.1.4" }, "peerDependencies": { "@vue/devtools-api": "^8.1.5", "typescript": ">=5.6.0", "vue": "^3.5.11" }, "optionalPeers": ["typescript"] }, "sha512-XMQqpvjgG7LMqVhhFUzKLT4KEbsYbfZZ0CZU9PgdFm1O2VKBmIkykL8+SfNhOaT7sR0wT6BEgKT0YNDYWgmVRA=="],
 
     "pkg-types": ["pkg-types@2.3.3", "", { "dependencies": { "confbox": "^0.3.1", "exsolve": "^1.1.1", "pathe": "^2.0.3" } }, "sha512-j/lCFdcppV0JxWpCEITdbDltBxPP6cHT+yNJ6Go2OgoSA9518X847X9z0p6LtA4Nc16+eQzCZjRrWanTGvHJ5w=="],
 

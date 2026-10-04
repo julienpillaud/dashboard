@@ -1,32 +1,41 @@
-from typing import Annotated
+from typing import Any
 
-from fastapi import Form, HTTPException, status
-from pydantic import BaseModel
+from fastapi import HTTPException, status
+from fastapi.responses import JSONResponse
 
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "Bearer"
-    expires_in: int
-    refresh_token: str
+from app.core.settings import Settings
+from app.domain.users.entities import UserSession
 
 
 def make_not_authenticated_error() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated",
-        headers={"WWW-Authenticate": "Bearer"},
+        headers={"WWW-Authenticate": "Bearer, Cookie"},
     )
 
 
-class OAuth2RefreshTokenRequestForm:
-    def __init__(
-        self,
-        *,
-        grant_type: Annotated[str, Form(pattern="^refresh_token$")],
-        refresh_token: Annotated[str, Form()],
-        scope: Annotated[str, Form()] = "",
-    ) -> None:
-        self.grant_type = grant_type
-        self.refresh_token = refresh_token
-        self.scopes = scope.split()
+def build_response_with_cookies(
+    settings: Settings,
+    content: Any,  # noqa: ANN401
+    session: UserSession,
+) -> JSONResponse:
+    response = JSONResponse(content=content, status_code=status.HTTP_200_OK)
+    response.set_cookie(
+        key="access_token",
+        value=session.access_token,
+        max_age=settings.access_token_expire,
+        secure=settings.cookie_secure,
+        httponly=True,
+        samesite="strict",
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=session.refresh_token,
+        max_age=settings.refresh_token_expire,
+        path="/api/auth",
+        secure=settings.cookie_secure,
+        httponly=True,
+        samesite="strict",
+    )
+    return response

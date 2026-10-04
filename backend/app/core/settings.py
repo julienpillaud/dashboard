@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     logfire_token: str | None = None
     secret_key: str
     jwt_algorithm: str = "HS256"
+    cookie_secure: bool = True
     access_token_expire: int = 15 * 60  # 15 minutes
     refresh_token_expire: int = 7 * 24 * 60 * 60  # 7 days
 

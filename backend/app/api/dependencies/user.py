@@ -4,20 +4,19 @@ from typing import Annotated
 
 import jwt
 from fastapi import Depends
-from fastapi.security import HTTPBearer, OAuth2PasswordBearer
+from fastapi.security import APIKeyCookie, OAuth2PasswordBearer
 from pydantic import BaseModel, ValidationError
 
 from app.api.auth.utils import make_not_authenticated_error
-from app.api.dependencies.app import get_domain, get_settings
+from app.api.dependencies.app import QueryDomain, get_settings
 from app.api.exceptions import InvalidAccessTokenError
-from app.core.domain import Domain
 from app.core.settings import Settings
 from app.domain.exceptions import NotFoundError
 from app.domain.users.entities import UserExternal
 from app.domain.users.use_cases import get_user_by_id
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token", auto_error=False)
-bearer_scheme = HTTPBearer(auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
+cookie_scheme = APIKeyCookie(name="access_token", auto_error=False)
 
 
 class TokenPayload(BaseModel):
@@ -46,11 +45,11 @@ def decode_access_token(settings: Settings, value: str) -> TokenPayload:
 
 async def get_current_user(
     settings: Annotated[Settings, Depends(get_settings)],
-    domain: Annotated[Domain, Depends(get_domain)],
     oauth2_token: Annotated[str | None, Depends(oauth2_scheme)],
-    bearer_token: Annotated[str | None, Depends(bearer_scheme)],
+    cookie_token: Annotated[str | None, Depends(cookie_scheme)],
+    domain: QueryDomain,
 ) -> UserExternal:
-    access_token = oauth2_token or bearer_token
+    access_token = oauth2_token or cookie_token
     if not access_token:
         raise make_not_authenticated_error()
 

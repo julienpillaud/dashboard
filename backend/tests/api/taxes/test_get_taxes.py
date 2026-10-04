@@ -1,10 +1,10 @@
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from tests.plugins.factories import Factory
+from tests.factories.factory import Factory
 
 
-def test_get_taxes(factory: Factory, client: TestClient) -> None:
+def test_get_taxes(factory: Factory, tokens: None, client: TestClient) -> None:
     taxes_count = 3
     factory.taxes.create_many(taxes_count)
 

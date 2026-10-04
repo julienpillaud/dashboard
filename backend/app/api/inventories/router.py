@@ -6,9 +6,8 @@ from fastapi.requests import Request
 from fastapi.responses import Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from app.api.dependencies.app import get_domain, get_pdf_converter, get_templates
+from app.api.dependencies.app import QueryDomain, get_pdf_converter, get_templates
 from app.api.dependencies.user import get_current_user
-from app.core.domain import Domain
 from app.domain.inventories.entities import Inventory
 from app.domain.inventories.use_cases import (
     create_inventory,
@@ -26,7 +25,7 @@ router = APIRouter(
 
 @router.get("", summary="Get inventories")
 async def get_inventories_endpoint(
-    domain: Annotated[Domain, Depends(get_domain)],
+    domain: QueryDomain,
     pagination: Annotated[Pagination, Depends()],
     store_slug: str,
 ) -> PaginatedResponse[Inventory]:
@@ -43,7 +42,7 @@ async def get_inventories_endpoint(
     summary="Create inventory",
 )
 async def create_inventory_endpoint(
-    domain: Annotated[Domain, Depends(get_domain)],
+    domain: QueryDomain,
     store: str,
 ) -> Inventory:
     return await domain.run(create_inventory, store_slug=store)
@@ -52,7 +51,7 @@ async def create_inventory_endpoint(
 @router.get("/{inventory_id}/preview")
 async def preview_inventory_pdf(
     request: Request,
-    domain: Annotated[Domain, Depends(get_domain)],
+    domain: QueryDomain,
     templates: Annotated[Jinja2Templates, Depends(get_templates)],
     inventory_id: EntityId,
     store: str,
@@ -72,7 +71,7 @@ async def preview_inventory_pdf(
 @router.get("/{inventory_id}/pdf")
 async def download_inventory_pdf(
     request: Request,
-    domain: Annotated[Domain, Depends(get_domain)],
+    domain: QueryDomain,
     templates: Annotated[Jinja2Templates, Depends(get_templates)],
     pdf_converter: Annotated[PDFConverterProtocol, Depends(get_pdf_converter)],
     inventory_id: EntityId,

@@ -22,17 +22,17 @@ from app.domain.users.entities import UserExternal, UserSession
 async def authenticate_user(
     context: ContextProtocol,
     /,
-    name: str,
+    email: str,
     password: str,
 ) -> UserExternal:
-    user = await context.user_repository.get_by_name(name=name)
+    user = await context.user_repository.get_by_email(email=email)
     if not user:
-        raise NotFoundError(f"User '{name}' not found")
+        raise NotFoundError(f"User '{email}' not found")
 
     if not verify_password(password, user.hashed_password):
         raise UnauthorizedError("User authentication failed")
 
-    return UserExternal(id=user.id, name=user.name)
+    return UserExternal(id=user.id, email=user.email)
 
 
 async def get_user_by_id(
@@ -44,7 +44,7 @@ async def get_user_by_id(
     if not user:
         raise NotFoundError("User not found")
 
-    return UserExternal(id=user.id, name=user.name)
+    return UserExternal(id=user.id, email=user.email)
 
 
 async def create_user_session(

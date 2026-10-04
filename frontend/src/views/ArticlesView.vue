@@ -15,6 +15,7 @@ import InputText from 'openvue/inputtext'
 
 // State
 const articles = ref<Article[]>([])
+const loading = ref(true)
 const pageSize = ref(50)
 const total = ref()
 const dialogVisible = ref(false)
@@ -41,7 +42,7 @@ const onSearch = () => {
   searchTimeout = setTimeout(() => {
     first.value = 0
     fetchArticles(0)
-  }, 100)
+  }, 200)
 }
 
 const clearSearch = () => {
@@ -67,8 +68,12 @@ const onArticleCreated = () => {
 }
 
 // Lifecycle
-onMounted(() => {
-  fetchArticles()
+onMounted(async () => {
+  try {
+    fetchArticles()
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -94,6 +99,7 @@ onMounted(() => {
       paginator
       paginatorPosition="both"
       lazy
+      :loading="loading"
       :rows="pageSize"
       :first="first"
       :totalRecords="total"

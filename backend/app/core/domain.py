@@ -1,16 +1,11 @@
 import time
 from collections.abc import Awaitable, Callable
 from types import TracebackType
-from typing import Concatenate, Protocol
+from typing import Concatenate
 
 from app.core.logger import logger
+from app.core.protocols import ContextProviderProtocol, UnitOfWorkProtocol
 from app.domain.context import ContextProtocol
-
-
-class TransactionProtocol(Protocol):
-    async def start(self) -> None: ...
-
-    async def end(self, error: BaseException | None) -> None: ...
 
 
 class Domain:
@@ -24,31 +19,26 @@ class Domain:
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
-        name = getattr(func, "__name__", "unknown")
-        start_time = time.perf_counter()
-        try:
-            return await func(self._context, *args, **kwargs)
-        finally:
-            elapsed = (time.perf_counter() - start_time) * 1000
-            logger.info(f"{name} [{elapsed:.1f} ms]")
+        return await func(self._context, *args, **kwargs)
 
 
-class DomainContext:
+class DomainScope:
     def __init__(
         self,
-        transaction: TransactionProtocol,
-        context_provider: Callable[[TransactionProtocol], ContextProtocol],
+        uow: UnitOfWorkProtocol,
+        context_provider: ContextProviderProtocol,
+        transactional: bool,
     ) -> None:
-        self._transaction = transaction
-        self._context_provider = context_provider
+        self.uow = uow
+        self.context_provider = context_provider
+        self.transactional = transactional
 
     async def __aenter__(self) -> Domain:
         logger.debug("Start Use case")
         self._start_time = time.perf_counter()
-        await self._transaction.start()
-        self._context = self._context_provider(self._transaction)
-        self._domain = Domain(context=self._context)
-        return self._domain
+
+        await self.uow.start(transactional=self.transactional)
+        return Domain(context=self.context_provider(self.uow))
 
     async def __aexit__(
         self,
@@ -56,6 +46,7 @@ class DomainContext:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        await self._transaction.end(error=exc_val)
+        await self.uow.end(error=exc_val)
+
         elapsed = (time.perf_counter() - self._start_time) * 1000
         logger.info(f"Use case [{elapsed:.1f} ms]")
