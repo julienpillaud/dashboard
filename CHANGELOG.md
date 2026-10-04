@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.0](https://github.com/julienpillaud/dashboard/compare/0.10.0...0.11.0) (2026-10-04)
+
+
+### Features
+
+* add auth ([#28](https://github.com/julienpillaud/dashboard/issues/28)) ([c9d6b4a](https://github.com/julienpillaud/dashboard/commit/c9d6b4a19f18c502bfc73008c0663512e4643308))
+* add search ([#26](https://github.com/julienpillaud/dashboard/issues/26)) ([11a7920](https://github.com/julienpillaud/dashboard/commit/11a7920e560d24056000a7a286bba92c8dab8cdd))
+
 ## [0.10.0](https://github.com/julienpillaud/dashboard/compare/0.9.0...0.10.0) (2026-09-28)
 
 
