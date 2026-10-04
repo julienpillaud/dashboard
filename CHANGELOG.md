@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/julienpillaud/dashboard/compare/0.11.0...0.12.0) (2026-10-04)
+
+
+### Features
+
+* add margins in front ([#29](https://github.com/julienpillaud/dashboard/issues/29)) ([78bd211](https://github.com/julienpillaud/dashboard/commit/78bd2117dfe5b4ce0da368b4cb161d1d032431a8))
+
 ## [0.11.0](https://github.com/julienpillaud/dashboard/compare/0.10.0...0.11.0) (2026-10-04)
 
 
