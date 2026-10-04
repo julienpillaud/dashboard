@@ -37,6 +37,7 @@
     "openvue": "^1.0.0",
     "oxfmt": "0.59.0",
     "oxlint": "1.74.0",
+    "pinia": "^4.0.3",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
     "vite": "8.1.5",

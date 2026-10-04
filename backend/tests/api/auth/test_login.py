@@ -1,4 +1,3 @@
-import pytest
 from cleanstack.mongo import MongoDocument
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -8,37 +7,40 @@ from app.domain.security import hash_refresh_token
 from tests.plugins.users import TestUser
 
 
-@pytest.mark.parametrize("user", [{"refresh_token": False}], indirect=True)
-@pytest.mark.parametrize("client", [{"authenticated": False}], indirect=True)
-def test_access_token(
+def test_login_success(
     client: TestClient,
     user: TestUser,
     database: Database[MongoDocument],
 ) -> None:
     response = client.post(
-        "/api/auth/token",
-        data={"username": user.name, "password": user.password},
+        "/api/auth/login",
+        data={"username": user.email, "password": user.password},
     )
 
     assert response.status_code == status.HTTP_200_OK
+
+    access_token = response.cookies["access_token"]
+    assert access_token is not None
+    refresh_token = response.cookies["refresh_token"]
+    assert refresh_token is not None
+
     result = response.json()
-    new_raw_token = result["refresh_token"]
-    new_hashed_token = hash_refresh_token(new_raw_token)
+    assert result["id"] == str(user.id)
 
     # New token created
-    new_db_token = database["refresh_tokens"].find_one({"hash_value": new_hashed_token})
+    hashed_token = hash_refresh_token(refresh_token)
+    new_db_token = database["refresh_tokens"].find_one({"hash_value": hashed_token})
     assert new_db_token is not None
     assert new_db_token["user_id"] == user.id
     assert new_db_token["revoked_at"] is None
 
 
-@pytest.mark.parametrize("client", [{"authenticated": False}], indirect=True)
-def test_token_bad_credentials(
+def test_login_bad_credentials(
     client: TestClient,
     database: Database[MongoDocument],
 ) -> None:
     response = client.post(
-        "/api/auth/token",
+        "/api/auth/login",
         data={"username": "test", "password": "test"},
     )
 

@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
 from functools import lru_cache
 from typing import Annotated
 
@@ -7,12 +7,12 @@ from fastapi.requests import Request
 from fastapi.templating import Jinja2Templates
 
 from app.core.context import ContextProvider
-from app.core.domain import Domain, DomainContext, TransactionProtocol
+from app.core.domain import Domain, DomainScope
+from app.core.protocols import ContextProviderProtocol, UnitOfWorkProtocol
 from app.core.settings import Settings
-from app.domain.context import ContextProtocol
 from app.domain.protocols import PDFConverterProtocol
 from app.infrastructure.gotenberg.converter import GotenbergPDFConverter
-from app.infrastructure.mongo.resource.asynchronous import MongoTransaction
+from app.infrastructure.mongo.uow import MongoUnitOfWork
 
 
 @lru_cache
@@ -38,31 +38,36 @@ def get_pdf_converter(
     )
 
 
-def get_mongo_transaction(request: Request) -> MongoTransaction:
-    mongo_resource = request.app.state.mongo_resource
-    return MongoTransaction(mongo_resource)
+def get_uow(request: Request) -> MongoUnitOfWork:
+    resource = request.app.state.mongo_resource
+    return MongoUnitOfWork(resource)
 
 
-def get_context_provider(
-    request: Request,
-    settings: Annotated[Settings, Depends(get_settings)],
-) -> Callable[[TransactionProtocol], ContextProtocol]:
-    return ContextProvider(
-        settings=settings,
-        http_client=request.app.state.http_client,
-        tactill_factory=request.app.state.tactill_factory,
-    )
+def get_context_provider(request: Request) -> ContextProviderProtocol:
+    return ContextProvider(tactill_factory=request.app.state.tactill_factory)
 
 
-async def get_domain(
-    mongo_transaction: Annotated[MongoTransaction, Depends(get_mongo_transaction)],
-    context_provider: Annotated[
-        Callable[[TransactionProtocol], ContextProtocol],
-        Depends(get_context_provider),
-    ],
-) -> AsyncIterator[Domain]:
-    async with DomainContext(
-        transaction=mongo_transaction,
-        context_provider=context_provider,
-    ) as domain:
-        yield domain
+class DomainProvider:
+    def __init__(self, *, transactional: bool = False) -> None:
+        self.transactional = transactional
+
+    async def __call__(
+        self,
+        uow: Annotated[UnitOfWorkProtocol, Depends(get_uow)],
+        context_provider: Annotated[
+            ContextProviderProtocol, Depends(get_context_provider)
+        ],
+    ) -> AsyncIterator[Domain]:
+        async with DomainScope(
+            uow=uow,
+            context_provider=context_provider,
+            transactional=self.transactional,
+        ) as domain:
+            yield domain
+
+
+QueryDomain = Annotated[Domain, Depends(DomainProvider(), scope="function")]
+CommandDomain = Annotated[
+    Domain,
+    Depends(DomainProvider(transactional=True), scope="function"),
+]

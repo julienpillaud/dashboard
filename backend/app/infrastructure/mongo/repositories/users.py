@@ -26,6 +26,6 @@ class UserRepository(UserRepositoryProtocol):
     async def get_by_id(self, entity_id: EntityId, /) -> User | None:
         return await self.repository.get_by_id(entity_id)
 
-    async def get_by_name(self, name: str) -> User | None:
-        result = await self.repository.collection.find_one({"name": name})
+    async def get_by_email(self, email: str) -> User | None:
+        result = await self.repository.collection.find_one({"email": email})
         return self.repository.to_domain_entity(result) if result else None

@@ -5,22 +5,22 @@ dynamic = ["version"]
 requires-python = ">=3.14"
 dependencies = [
     "cleanstack[mongo]",
-    "fastapi[standard]==0.141.1",
+    "fastapi[standard]==0.142.2",
     "itsdangerous==2.2.0",
     "logfire[fastapi,pymongo]==5.1.1",
     "pwdlib[argon2]==0.3.1",
     "pydantic-settings==2.15.0",
-    "pyjwt==2.15.0",
+    "pyjwt==2.15.1",
     "pymongo==4.18.2",
     "tactill",
 ]
 
 [dependency-groups]
 dev = [
-    "faker==40.39.0",
-    "mypy==2.3.1",
+    "faker==40.40.0",
+    "mypy==2.4.0",
     "pytest==9.1.1",
-    "ruff==0.16.9",
+    "ruff==0.16.10",
     "ty==0.0.84",
 ]
 

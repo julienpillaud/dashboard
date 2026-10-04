@@ -19,10 +19,8 @@ from app.domain.inventories.entities import Inventory, InventoryAmounts, Invento
 from app.domain.inventories.use_cases import get_deposit_value, get_inventory_value
 from app.domain.inventories.utils import Report
 from app.domain.stores.entities import Store
-from app.infrastructure.mongo.resource.asynchronous import (
-    MongoResource,
-    MongoTransaction,
-)
+from app.infrastructure.mongo.resource import MongoResource
+from app.infrastructure.mongo.uow import MongoUnitOfWork
 from app.infrastructure.tactill.factory import TactillClientFactory
 
 
@@ -50,13 +48,11 @@ def read_inventory(csv_file: Path) -> list[InventoryFile]:
 
 async def get_context(settings: Settings) -> Context:
     resource = await MongoResource.from_settings(settings)
-    transaction = MongoTransaction(resource)
+    uow = MongoUnitOfWork(resource)
     http_client = httpx2.AsyncClient()
     return Context(
-        settings=settings,
-        http_client=http_client,
+        uow=uow,
         tactill_factory=TactillClientFactory(http_client=http_client),
-        transaction=transaction,
     )
 
 

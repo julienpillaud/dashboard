@@ -8,7 +8,7 @@ from scripts.commons import logger
 
 
 async def get_old_stores(context: Context) -> list[MongoDocument]:
-    db_source = context.transaction.client["dashboard"]
+    db_source = context.resource.client["dashboard"]
     cursor = db_source["shops"].find()
     return await cursor.to_list()
 

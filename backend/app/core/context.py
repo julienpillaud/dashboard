@@ -1,9 +1,6 @@
 from functools import cached_property
 
-import httpx2
-
-from app.core.domain import TransactionProtocol
-from app.core.settings import Settings
+from app.core.protocols import UnitOfWorkProtocol
 from app.domain.articles.repository import ArticleRepositoryProtocol
 from app.domain.categories.repository import CategoryRepositoryProtocol
 from app.domain.context import ContextProtocol
@@ -25,7 +22,7 @@ from app.infrastructure.mongo.repositories.refresh_tokens import RefreshTokenRep
 from app.infrastructure.mongo.repositories.stores import StoreRepository
 from app.infrastructure.mongo.repositories.taxes import TaxRepository
 from app.infrastructure.mongo.repositories.users import UserRepository
-from app.infrastructure.mongo.resource.asynchronous import MongoTransaction
+from app.infrastructure.mongo.uow import MongoUnitOfWork
 from app.infrastructure.tactill.factory import TactillClientFactory
 from app.infrastructure.tactill.manager import TactillManager
 
@@ -33,17 +30,13 @@ from app.infrastructure.tactill.manager import TactillManager
 class Context(ContextProtocol):
     def __init__(
         self,
-        settings: Settings,
-        http_client: httpx2.AsyncClient,
+        uow: MongoUnitOfWork,
         tactill_factory: TactillClientFactory,
-        transaction: MongoTransaction,
     ) -> None:
-        self.settings = settings
-        self.http_client = http_client
+        self.resource = uow.resource
+        self.database = uow.resource.database
+        self.session = uow.session
         self.tactill_factory = tactill_factory
-        self.transaction = transaction
-        self.database = transaction.resource.database
-        self.session = transaction.session
 
     @cached_property
     def user_repository(self) -> UserRepositoryProtocol:
@@ -87,23 +80,11 @@ class Context(ContextProtocol):
 
 
 class ContextProvider:
-    def __init__(
-        self,
-        settings: Settings,
-        http_client: httpx2.AsyncClient,
-        tactill_factory: TactillClientFactory,
-    ) -> None:
-        self._settings = settings
-        self._http_client = http_client
-        self._tactill_factory = tactill_factory
+    def __init__(self, tactill_factory: TactillClientFactory) -> None:
+        self.tactill_factory = tactill_factory
 
-    def __call__(self, transaction: TransactionProtocol) -> Context:
-        if not isinstance(transaction, MongoTransaction):
+    def __call__(self, uow: UnitOfWorkProtocol) -> Context:
+        if not isinstance(uow, MongoUnitOfWork):
             raise RuntimeError()
 
-        return Context(
-            settings=self._settings,
-            http_client=self._http_client,
-            tactill_factory=self._tactill_factory,
-            transaction=transaction,
-        )
+        return Context(uow=uow, tactill_factory=self.tactill_factory)

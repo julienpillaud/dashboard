@@ -3,7 +3,7 @@ import datetime
 import uuid
 from collections import defaultdict
 from collections.abc import Sequence
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from cleanstack.mongo import MongoDocument
 
@@ -95,7 +95,7 @@ def check_article_consistency(
         is_consistent = False
         logger.warning(f"Consistency failed on 'len' for {old_article['name']}")
 
-    checks = [
+    checks: list[tuple[str, list[Any]]] = [
         ("name", [r.raw_article.name for r in results]),
         ("category", [r.category_name for r in results]),
         ("tax_rate", [r.tax_rate for r in results]),
@@ -111,7 +111,7 @@ def check_article_consistency(
 
 
 async def get_old_articles(context: Context) -> list[MongoDocument]:
-    db_source = context.transaction.client["dashboard"]
+    db_source = context.resource.client["dashboard"]
     cursor = db_source["articles"].find()
     return await cursor.to_list()
 
