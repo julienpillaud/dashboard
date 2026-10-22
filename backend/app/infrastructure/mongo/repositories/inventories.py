@@ -1,9 +1,11 @@
-from cleanstack import EntityId, FilterEntity, PaginatedResponse, Pagination, SortEntity
+from cleanstack import EntityId
 from cleanstack.mongo import AsyncMongoRepository, MongoDocument
+from cleanstack.mongo.utils import normalize_ids
+from pymongo import DESCENDING
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
 
-from app.domain.inventories.entities import Inventory
+from app.domain.inventories.entities import Inventory, InventorySummary
 from app.domain.inventories.repository import InventoryRepositoryProtocol
 
 
@@ -23,19 +25,21 @@ class InventoryRepository(InventoryRepositoryProtocol):
             session=session,
         )
 
-    async def get_all(
+    async def get_summaries_by_store(
         self,
-        search: str | None = None,
-        filters: list[FilterEntity] | None = None,
-        sort: list[SortEntity] | None = None,
-        pagination: Pagination | None = None,
-    ) -> PaginatedResponse[Inventory]:
-        return await self.repository.get_all(
-            search=search,
-            filters=filters,
-            sort=sort,
-            pagination=pagination,
+        entity_id: EntityId,
+        /,
+    ) -> list[InventorySummary]:
+        cursor = self.repository.collection.find(
+            filter={"store_id": entity_id},
+            projection={"records": False},
+            sort=[("created_at", DESCENDING)],
+            session=self.repository.session,
         )
+        documents = await cursor.to_list()
+        for document in documents:
+            normalize_ids(document)
+        return [InventorySummary.model_validate(document) for document in documents]
 
     async def get_by_id(self, entity_id: EntityId, /) -> Inventory | None:
         return await self.repository.get_by_id(entity_id)

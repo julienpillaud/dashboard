@@ -53,7 +53,7 @@ class DomainProvider:
 
     async def __call__(
         self,
-        uow: Annotated[UnitOfWorkProtocol, Depends(get_uow)],
+        uow: Annotated[UnitOfWorkProtocol, Depends(get_uow, use_cache=False)],
         context_provider: Annotated[
             ContextProviderProtocol, Depends(get_context_provider)
         ],

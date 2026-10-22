@@ -10,6 +10,7 @@ import api from '@/services/api'
 import DataTable from 'openvue/datatable'
 import Column from 'openvue/column'
 import Button from 'openvue/button'
+import AppNav from '@/components/AppNav.vue'
 import ArticleFormDialog from '@/components/ArticleFormDialog.vue'
 import type { DataTablePageEvent } from 'openvue/datatable'
 import type { Article } from '@/types/articles'
@@ -100,17 +101,18 @@ onMounted(async () => {
 
 <template>
   <div class="h-screen flex flex-col">
-    <nav class="grid grid-cols-[1fr_auto_1fr] items-center bg-slate-100 shadow-sm px-6 py-3">
-      <div></div>
-      <IconField>
-        <InputIcon class="oi oi-search" />
-        <InputText v-model="search" placeholder="Rechercher…" @input="onSearch" />
-        <InputIcon v-show="search" class="oi oi-times cursor-pointer" @click="clearSearch" />
-      </IconField>
-      <div class="flex justify-end">
+    <AppNav>
+      <template #center>
+        <IconField>
+          <InputIcon class="oi oi-search" />
+          <InputText v-model="search" placeholder="Rechercher…" @input="onSearch" />
+          <InputIcon v-show="search" class="oi oi-times cursor-pointer" @click="clearSearch" />
+        </IconField>
+      </template>
+      <template #actions>
         <Button label="Nouveau" @click="dialogVisible = true" />
-      </div>
-    </nav>
+      </template>
+    </AppNav>
 
     <main class="flex-1 min-h-0 px-6 py-6">
       <DataTable

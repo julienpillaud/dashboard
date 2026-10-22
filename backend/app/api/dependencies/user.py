@@ -15,7 +15,7 @@ from app.domain.exceptions import NotFoundError
 from app.domain.users.entities import UserExternal
 from app.domain.users.use_cases import get_user_by_id
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
 cookie_scheme = APIKeyCookie(name="access_token", auto_error=False)
 
 

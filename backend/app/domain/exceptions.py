@@ -35,3 +35,7 @@ class UnprocessableContentError(DomainError):
 
 class InvalidRefreshTokenError(DomainError):
     pass
+
+
+class ServiceUnavailableError(DomainError):
+    """Domain error for a 503 HTTP status code."""

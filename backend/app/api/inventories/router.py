@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from cleanstack import EntityId, PaginatedResponse, Pagination
+from cleanstack import EntityId
 from fastapi import APIRouter, Depends, status
 from fastapi.requests import Request
 from fastapi.responses import Response, StreamingResponse
@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.api.dependencies.app import QueryDomain, get_pdf_converter, get_templates
 from app.api.dependencies.user import get_current_user
-from app.domain.inventories.entities import Inventory
+from app.domain.inventories.entities import Inventory, InventorySummary
 from app.domain.inventories.use_cases import (
     create_inventory,
     get_inventories,
@@ -26,14 +26,9 @@ router = APIRouter(
 @router.get("", summary="Get inventories")
 async def get_inventories_endpoint(
     domain: QueryDomain,
-    pagination: Annotated[Pagination, Depends()],
-    store_slug: str,
-) -> PaginatedResponse[Inventory]:
-    return await domain.run(
-        get_inventories,
-        pagination=pagination,
-        store_slug=store_slug,
-    )
+    store: str,
+) -> list[InventorySummary]:
+    return await domain.run(get_inventories, store_slug=store)
 
 
 @router.post(

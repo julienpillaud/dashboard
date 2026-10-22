@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 
 import httpx2
@@ -14,7 +14,7 @@ def lifespan_factory(
     settings: Settings,
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
     @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         app.state.mongo_resource = await MongoResource.from_settings(settings)
         app.state.http_client = httpx2.AsyncClient(timeout=settings.http_client_timeout)
         app.state.tactill_factory = TactillClientFactory(

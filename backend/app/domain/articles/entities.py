@@ -75,19 +75,23 @@ class Article(BaseEntity):
     created_at: DateTime
     updated_at: DateTime
 
-    def add_store_result(
+    def add_store_mapping(
         self,
         store: Store,
         price: Decimal,
-        result: POSCreationResult,
+        result: POSAPIResult[RawArticle],
     ) -> None:
         self.store_mapping[str(store.id)] = PosArticle(
             store_name=store.name,
             price=price,
             status=result.status,
-            raw=result.raw,
+            raw=result.data,
             error=result.error,
         )
+
+    def update_store_mapping(self, raws: dict[str, RawArticle], /) -> None:
+        for store_id, raw in raws.items():
+            self.store_mapping[store_id].raw = raw
 
 
 class ArticleCreate(BaseModel):
@@ -100,7 +104,12 @@ class ArticleCreate(BaseModel):
     price: Annotated[DecimalType, Field(gt=0, decimal_places=2)]
 
 
-class POSCreationResult(BaseModel):
+class POSAPIResult[T](BaseModel):
     status: POSStatus
-    raw: RawArticle | None
+    data: T | None
     error: str | None
+
+
+class ArticleSynchronizationResult(BaseModel):
+    updated: int
+    failed_stores: list[str]

@@ -7,8 +7,16 @@ from app.api.dependencies.app import QueryDomain
 from app.api.dependencies.user import get_current_user
 from app.api.filters import get_filters
 from app.api.search import get_search
-from app.domain.articles.entities import Article, ArticleCreate
-from app.domain.articles.use_cases import create_article, get_articles
+from app.domain.articles.entities import (
+    Article,
+    ArticleCreate,
+    ArticleSynchronizationResult,
+)
+from app.domain.articles.use_cases import (
+    create_article,
+    get_articles,
+    synchronize_articles,
+)
 
 router = APIRouter(
     prefix="/articles",
@@ -38,3 +46,10 @@ async def create_article_endpoint(
     data: ArticleCreate,
 ) -> Article:
     return await domain.run(create_article, data=data)
+
+
+@router.post("/synchronize", summary="Synchronize articles")
+async def synchronize_stocks_endpoint(
+    domain: QueryDomain,
+) -> ArticleSynchronizationResult:
+    return await domain.run(synchronize_articles)

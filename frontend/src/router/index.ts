@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ArticlesView from '@/views/ArticlesView.vue'
+import InventoriesView from '@/views/InventoriesView.vue'
 import LoginView from '@/views/LoginView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -12,6 +13,12 @@ const router = createRouter({
       path: '/articles',
       name: 'articles',
       component: ArticlesView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/inventories',
+      name: 'inventories',
+      component: InventoriesView,
       meta: { requiresAuth: true },
     },
     // catch-all: must stay last

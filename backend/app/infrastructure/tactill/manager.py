@@ -41,14 +41,18 @@ class TactillManager(POSManagerProtocol):
         limit: int = 100,
         skip: int = 0,
     ) -> list[RawArticle]:
-        articles = await self.client.articles.get_all(
-            limit=limit,
-            skip=skip,
-            filters=[
-                FilterEntity(field="is_default", value="false"),
-                FilterEntity(field="in_stock", value="true"),
-            ],
-        )
+        try:
+            articles = await self.client.articles.get_all(
+                limit=limit,
+                skip=skip,
+                filters=[
+                    FilterEntity(field="is_default", value="false"),
+                    FilterEntity(field="in_stock", value="true"),
+                ],
+            )
+        except TactillError as error:
+            raise POSError(str(error)) from error
+
         return [
             RawArticle.model_validate(article.model_dump())
             for article in articles

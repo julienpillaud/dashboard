@@ -35,3 +35,11 @@ class Inventory(BaseEntity):
     category_summary: dict[str, InventoryAmounts]
     tax_summary: dict[str, InventoryAmounts]
     records: list[InventoryRecord]
+
+
+class InventorySummary(BaseEntity):
+    store_id: EntityId
+    store_name: str
+    created_at: DateTime
+    amounts: InventoryAmounts
+    articles_count: int
