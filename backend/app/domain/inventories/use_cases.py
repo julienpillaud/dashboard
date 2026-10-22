@@ -21,22 +21,18 @@ from app.domain.inventories.utils import Report
 async def get_inventories(
     context: ContextProtocol,
     /,
-    store_slug: str,
+    store_id: EntityId,
 ) -> list[InventorySummary]:
-    store = await context.store_repository.get_by_slug(slug=store_slug)
-    if not store:
-        raise NotFoundError("Store not found")
-
-    return await context.inventory_repository.get_summaries_by_store(store.id)
+    return await context.inventory_repository.get_summaries_by_store(store_id)
 
 
 async def get_inventory_by_id(
     context: ContextProtocol,
     /,
-    store_slug: str,
+    store_id: EntityId,
     inventory_id: EntityId,
 ) -> Inventory:
-    store = await context.store_repository.get_by_slug(slug=store_slug)
+    store = await context.store_repository.get_by_id(store_id)
     if not store:
         raise NotFoundError("Store not found")
 
@@ -47,8 +43,12 @@ async def get_inventory_by_id(
     return inventory
 
 
-async def create_inventory(context: ContextProtocol, /, store_slug: str) -> Inventory:
-    store = await context.store_repository.get_by_slug(slug=store_slug)
+async def create_inventory(
+    context: ContextProtocol,
+    /,
+    store_id: EntityId,
+) -> Inventory:
+    store = await context.store_repository.get_by_id(store_id)
     if not store:
         raise NotFoundError("Store not found")
 

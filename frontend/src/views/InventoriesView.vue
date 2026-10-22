@@ -24,7 +24,7 @@ const SPINNER_TOKENS = {
   },
 }
 const { stores } = useStores()
-const storeSlug = ref<string>()
+const storeId = ref<string>()
 const inventories = ref<Inventory[]>([])
 // True once the list of the selected store has been received, so the empty message never flashes
 const loaded = ref(false)
@@ -34,12 +34,12 @@ const error = ref('')
 // =============================================================================
 // Functions
 const fetchInventories = async () => {
-  if (!storeSlug.value) return
+  if (!storeId.value) return
 
   // Only show the spinner for slow requests to avoid a flash on fast ones
   const loadingTimeout = setTimeout(() => (loading.value = true), 300)
   try {
-    const response = await api.get('/inventories', { params: { store: storeSlug.value } })
+    const response = await api.get('/inventories', { params: { store_id: storeId.value } })
     inventories.value = response.data
     loaded.value = true
   } catch (e) {
@@ -52,12 +52,12 @@ const fetchInventories = async () => {
 }
 
 const createInventory = async () => {
-  if (!storeSlug.value) return
+  if (!storeId.value) return
 
   creating.value = true
   error.value = ''
   try {
-    await api.post('/inventories', null, { params: { store: storeSlug.value } })
+    await api.post('/inventories', null, { params: { store_id: storeId.value } })
     await fetchInventories()
   } catch (e) {
     console.error(e)
@@ -71,18 +71,18 @@ const createInventory = async () => {
 }
 
 const printInventory = (inventory: Inventory) => {
-  const params = new URLSearchParams({ store: storeSlug.value ?? '' })
+  const params = new URLSearchParams({ store_id: storeId.value ?? '' })
   window.open(`/api/inventories/${inventory.id}/preview?${params}`, '_blank')
 }
 // =============================================================================
 // Lifecycle
 watch(stores, (value) => {
-  if (!storeSlug.value && value.length > 0) {
-    storeSlug.value = value[0]?.slug
+  if (!storeId.value && value.length > 0) {
+    storeId.value = value[0]?.id
   }
 })
 
-watch(storeSlug, () => {
+watch(storeId, () => {
   error.value = ''
   inventories.value = []
   loaded.value = false
@@ -96,10 +96,10 @@ watch(storeSlug, () => {
     <AppNav>
       <template #center>
         <Select
-          v-model="storeSlug"
+          v-model="storeId"
           :options="stores"
           optionLabel="name"
-          optionValue="slug"
+          optionValue="id"
           placeholder="Magasin"
           class="w-64"
         />
@@ -108,7 +108,7 @@ watch(storeSlug, () => {
         <Button
           label="Nouvel inventaire"
           :loading="creating"
-          :disabled="!storeSlug"
+          :disabled="!storeId"
           @click="createInventory"
         />
       </template>

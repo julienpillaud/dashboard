@@ -11,7 +11,7 @@ def make_not_authenticated_error() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated",
-        headers={"WWW-Authenticate": "Bearer, Cookie"},
+        headers={"WWW-Authenticate": "Cookie"},
     )
 
 

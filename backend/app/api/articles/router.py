@@ -4,7 +4,7 @@ from cleanstack import FilterEntity, PaginatedResponse, Pagination
 from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies.app import QueryDomain
-from app.api.dependencies.user import get_current_user
+from app.api.dependencies.user import get_current_user_id
 from app.api.filters import get_filters
 from app.api.search import get_search
 from app.domain.articles.entities import (
@@ -21,7 +21,7 @@ from app.domain.articles.use_cases import (
 router = APIRouter(
     prefix="/articles",
     tags=["Articles"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_user_id)],
 )
 
 
