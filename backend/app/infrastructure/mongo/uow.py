@@ -30,3 +30,4 @@ class MongoUnitOfWork(UnitOfWorkProtocol):
                 logger.warning("Transaction rollback")
         finally:
             await self.session.end_session()
+            self.session = None

@@ -14,12 +14,15 @@ from cleanstack import (
 from app.domain.articles.entities import (
     Article,
     ArticleCreate,
-    POSCreationResult,
+    ArticleSynchronizationResult,
+    POSAPIResult,
     POSStatus,
+    RawArticle,
 )
 from app.domain.categories.entities import Category
 from app.domain.context import ContextProtocol
 from app.domain.exceptions import NotFoundError
+from app.domain.logger import logger
 from app.domain.protocols import (
     POSError,
 )
@@ -84,7 +87,7 @@ async def create_article(context: ContextProtocol, /, data: ArticleCreate) -> Ar
         )
     )
     for store, result in zip(stores, results, strict=True):
-        article.add_store_result(store=store, price=data.price, result=result)
+        article.add_store_mapping(store=store, price=data.price, result=result)
 
     await context.article_repository.save(article)
     return article
@@ -98,7 +101,7 @@ async def create_pos_article(
     tax: Tax,
     price: Decimal,
     article: Article,
-) -> POSCreationResult:
+) -> POSAPIResult[RawArticle]:
     manager = await context.get_pos_manager(store)
     category_id = category.store_mapping[str(store.id)].id
     tax_id = tax.store_mapping[str(store.id)].id
@@ -111,14 +114,65 @@ async def create_pos_article(
             article=article,
         )
     except POSError as error:
-        return POSCreationResult(
-            status=POSStatus.FAILED,
-            raw=None,
-            error=str(error),
-        )
+        return POSAPIResult(status=POSStatus.FAILED, data=None, error=str(error))
 
-    return POSCreationResult(
-        status=POSStatus.CREATED,
-        raw=raw_article,
-        error=None,
+    return POSAPIResult(status=POSStatus.CREATED, data=raw_article, error=None)
+
+
+async def synchronize_articles(
+    context: ContextProtocol,
+    /,
+) -> ArticleSynchronizationResult:
+    stores = await get_stores(context)
+    results = await asyncio.gather(
+        *(fetch_pos_articles(context, store=store) for store in stores)
     )
+
+    failed_stores = []
+    raws_by_store = {}
+    for store, result in zip(stores, results, strict=True):
+        if result is None:
+            failed_stores.append(store.slug)
+            continue
+
+        raws_by_store[str(store.id)] = {raw.id: raw for raw in result}
+
+    articles = await context.article_repository.get_all(
+        pagination=Pagination(size=3000)
+    )
+    updated_articles = []
+    for article in articles.items:
+        updated_raws = {}
+        for store_id, pos_article in article.store_mapping.items():
+            if pos_article.raw is None:
+                continue
+
+            raw = raws_by_store.get(store_id, {}).get(pos_article.raw.id)
+            if raw is None:
+                continue
+
+            if pos_article.raw != raw:
+                updated_raws[store_id] = raw
+
+        if updated_raws:
+            article.update_store_mapping(updated_raws)
+            updated_articles.append(article)
+
+    await context.article_repository.update_many(updated_articles)
+    return ArticleSynchronizationResult(
+        updated=len(updated_articles),
+        failed_stores=failed_stores,
+    )
+
+
+async def fetch_pos_articles(
+    context: ContextProtocol,
+    /,
+    store: Store,
+) -> list[RawArticle] | None:
+    manager = await context.get_pos_manager(store)
+    try:
+        return await manager.get_articles(limit=3000)
+    except POSError as error:
+        logger.warning(f"Failed to fetch articles for store {store.name}: {error}")
+        return None

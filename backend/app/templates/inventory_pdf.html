@@ -1,19 +1,25 @@
-{% extends "base.html" %}
-{% block body_content %}
-
-<style>
-  @media screen {
-    body {
-      width: 210mm;
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Inventaire {{ inventory.store_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @media screen {
+      body {
+        width: 210mm;
+      }
     }
-  }
 
-  @media print {
-    .print-page-break {
-      break-after: page;
+    @media print {
+      .print-page-break {
+        break-after: page;
+      }
     }
-  }
-</style>
+  </style>
+</head>
+<body>
 
 <div class="min-h-screen">
   {# ======================================================================== #}
@@ -141,4 +147,5 @@
   {# ======================================================================== #}
 </div>
 
-{% endblock %}
+</body>
+</html>

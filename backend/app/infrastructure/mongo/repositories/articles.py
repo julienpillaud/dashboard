@@ -13,7 +13,7 @@ from cleanstack import (
 )
 from cleanstack.exceptions import InvalidFilterError
 from cleanstack.mongo import AsyncMongoRepository, MongoDocument
-from pymongo import DeleteOne
+from pymongo import DeleteOne, ReplaceOne
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -153,9 +153,30 @@ class ArticleRepository(ArticleRepositoryProtocol):
             session=self.repository.session,
         )
 
+    async def update_many(self, entities: list[Article], /) -> None:
+        if not entities:
+            return
+
+        requests = [
+            ReplaceOne(
+                filter={"_id": entity.id},
+                replacement=self.repository.to_database_entity(entity),
+            )
+            for entity in entities
+        ]
+        await self.repository.collection.bulk_write(
+            requests=requests,
+            ordered=False,
+            session=self.repository.session,
+        )
+
     async def delete_many(self, entities: list[Article], /) -> None:
         if not entities:
             return
 
         requests = [DeleteOne(filter={"_id": entity.id}) for entity in entities]
-        await self.repository.collection.bulk_write(requests=requests, ordered=False)
+        await self.repository.collection.bulk_write(
+            requests=requests,
+            ordered=False,
+            session=self.repository.session,
+        )

@@ -25,6 +25,7 @@ from app.infrastructure.tactill.factory import TactillClientFactory
 
 
 class InventoryFile(BaseModel):
+    id: str
     name: str
     category: str
     stock_quantity: int
@@ -37,6 +38,7 @@ def read_inventory(csv_file: Path) -> list[InventoryFile]:
         for line in reader:
             lines.append(
                 InventoryFile(
+                    id="",
                     name=line["Nom de l'article"],
                     category=line["Catégorie"],
                     stock_quantity=int(line["Stock"]),
@@ -101,6 +103,8 @@ async def create_inventory(
         )
 
         record = InventoryRecord(
+            article_id=article.id,
+            pos_article_id=item.id,
             name=article.name,
             category=article.category,
             tax_rate=article.tax_rate,

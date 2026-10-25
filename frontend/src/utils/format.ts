@@ -22,6 +22,12 @@ export const formatPercent = (value: number, digits: number = 1) =>
     maximumFractionDigits: digits,
   }).format(value)
 
+export const formatDateTime = (value: string) =>
+  new Intl.DateTimeFormat(LOCALE, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value))
+
 export const formatVolume = (volume: Volume | null): string => {
   if (!volume) return ''
   return `${formatNumber(volume.value)} ${volume.unit}`

@@ -1,18 +1,16 @@
 from typing import Protocol
 
-from cleanstack import EntityId, FilterEntity, PaginatedResponse, Pagination, SortEntity
+from cleanstack import EntityId
 
-from app.domain.inventories.entities import Inventory
+from app.domain.inventories.entities import Inventory, InventorySummary
 
 
 class InventoryRepositoryProtocol(Protocol):
-    async def get_all(
+    async def get_summaries_by_store(
         self,
-        search: str | None = None,
-        filters: list[FilterEntity] | None = None,
-        sort: list[SortEntity] | None = None,
-        pagination: Pagination | None = None,
-    ) -> PaginatedResponse[Inventory]: ...
+        entity_id: EntityId,
+        /,
+    ) -> list[InventorySummary]: ...
 
     async def get_by_id(self, entity_id: EntityId, /) -> Inventory | None: ...
 

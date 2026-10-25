@@ -35,18 +35,6 @@ async def authenticate_user(
     return UserExternal(id=user.id, email=user.email)
 
 
-async def get_user_by_id(
-    context: ContextProtocol,
-    /,
-    user_id: EntityId,
-) -> UserExternal:
-    user = await context.user_repository.get_by_id(user_id)
-    if not user:
-        raise NotFoundError("User not found")
-
-    return UserExternal(id=user.id, email=user.email)
-
-
 async def create_user_session(
     context: ContextProtocol,
     /,
@@ -92,12 +80,16 @@ async def refresh_user_session(
     if not previous_token.is_valid:
         raise InvalidRefreshTokenError("Refresh token expired")
 
+    user = await context.user_repository.get_by_id(previous_token.user_id)
+    if not user:
+        raise InvalidRefreshTokenError("User not found")
+
     await context.refresh_token_repository.revoke(token_id=previous_token.id)
 
     return await create_user_session(
         context,
         settings=settings,
-        user_id=previous_token.user_id,
+        user_id=user.id,
     )
 
 

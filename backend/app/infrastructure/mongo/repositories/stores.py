@@ -1,3 +1,4 @@
+from cleanstack import EntityId
 from cleanstack.mongo import AsyncMongoRepository, MongoDocument
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
@@ -26,6 +27,9 @@ class StoreRepository(StoreRepositoryProtocol):
         cursor = self.repository.collection.find()
         items = await cursor.to_list()
         return [self.repository.to_domain_entity(item) for item in items]
+
+    async def get_by_id(self, entity_id: EntityId, /) -> Store | None:
+        return await self.repository.get_by_id(entity_id)
 
     async def get_by_slug(self, slug: str) -> Store | None:
         result = await self.repository.collection.find_one({"slug": slug})

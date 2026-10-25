@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, status
@@ -6,14 +7,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.auth.utils import build_response_with_cookies, make_not_authenticated_error
 from app.api.dependencies.app import QueryDomain, get_settings
-from app.api.dependencies.user import get_current_user
+from app.api.dependencies.user import get_current_user_id
 from app.core.settings import Settings
 from app.domain.exceptions import (
     InvalidRefreshTokenError,
     NotFoundError,
     UnauthorizedError,
 )
-from app.domain.users.entities import UserExternal
 from app.domain.users.use_cases import (
     authenticate_user,
     create_user_session,
@@ -78,7 +78,7 @@ async def refresh_token_endpoint(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
-    current_user: Annotated[UserExternal, Depends(get_current_user)],
+    current_user_id: Annotated[uuid.UUID, Depends(get_current_user_id)],
     domain: QueryDomain,
 ) -> None:
-    await domain.run(logout_user, user_id=current_user.id)
+    await domain.run(logout_user, user_id=current_user_id)
