@@ -17,6 +17,8 @@ class InventoryAmounts(BaseModel):
 
 
 class InventoryRecord(BaseModel):
+    article_id: EntityId
+    pos_article_id: str
     name: str
     category: str
     tax_rate: float

@@ -93,6 +93,8 @@ async def create_inventory(
         )
 
         record = InventoryRecord(
+            article_id=article.id,
+            pos_article_id=pos_article.raw.id,
             name=pos_article.raw.name,
             category=article.category,
             tax_rate=article.tax_rate,
