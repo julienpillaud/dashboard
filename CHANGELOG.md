@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/julienpillaud/dashboard/compare/0.13.0...0.14.0) (2026-10-25)
+
+
+### Features
+
+* prices by store on article creation ([#33](https://github.com/julienpillaud/dashboard/issues/33)) ([2f86357](https://github.com/julienpillaud/dashboard/commit/2f863575b431d83d3e8e30bf706a0956f7d537cd))
+
 ## [0.13.0](https://github.com/julienpillaud/dashboard/compare/0.12.0...0.13.0) (2026-10-25)
 
 
