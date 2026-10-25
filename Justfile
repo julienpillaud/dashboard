@@ -19,3 +19,13 @@ lint:
 [working-directory('backend')]
 tests *options="":
     uv run pytest {{ options }}
+
+[working-directory('frontend')]
+build-front:
+    npm run build
+    rm -rf ../backend/dist
+    cp -r dist ../backend/dist
+
+[working-directory('backend')]
+deploy: build-front
+    uv run fastapi deploy

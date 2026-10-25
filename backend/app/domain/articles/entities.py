@@ -2,7 +2,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated
 
-from cleanstack import BaseEntity
+from cleanstack import BaseEntity, EntityId
 from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
 
 from app.domain.entities import BaseRawEntity, DateTime, DecimalType
@@ -101,7 +101,7 @@ class ArticleCreate(BaseModel):
     tax_rate: float
     distributor: str | None
     details: ArticleDetails
-    price: Annotated[DecimalType, Field(gt=0, decimal_places=2)]
+    prices: dict[EntityId, Annotated[DecimalType, Field(gt=0, decimal_places=2)]]
 
 
 class POSAPIResult[T](BaseModel):

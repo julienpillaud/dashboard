@@ -5,6 +5,7 @@ import { useStores } from '@/composables/useStores'
 import { useCategories } from '@/composables/useCategories'
 import { useTaxes } from '@/composables/useTaxes'
 import { useOrigins } from '@/composables/useOrigins'
+import { useToast } from 'openvue/usetoast'
 import Dialog from 'openvue/dialog'
 import Button from 'openvue/button'
 import FloatLabel from 'openvue/floatlabel'
@@ -13,7 +14,8 @@ import Select from 'openvue/select'
 import InputNumber from 'openvue/inputnumber'
 import Divider from 'openvue/divider'
 import type { CategoryFields } from '@/types/categories'
-import type { ArticleForm } from '../types/forms'
+import type { ArticleForm } from '@/types/forms'
+import { getMarginAmount, getMarginRate } from '@/utils/margins'
 // =============================================================================
 // Props - Emits
 const props = defineProps<{
@@ -26,6 +28,8 @@ const emit = defineEmits<{
 }>()
 // =============================================================================
 // Composables
+const toast = useToast()
+
 const { stores } = useStores()
 const { categories } = useCategories()
 const { taxes } = useTaxes()
@@ -36,7 +40,7 @@ const INITIAL_FORM: ArticleForm = {
   name: null,
   total_cost: null,
   tax_rate: null,
-  price: null,
+  prices: {},
   distributor: null,
   details: {
     origin: null,
@@ -51,8 +55,9 @@ const INITIAL_FORM: ArticleForm = {
 // State
 const form = ref<ArticleForm>(structuredClone(INITIAL_FORM))
 const selectedCategoryId = ref<string | null>(null)
-const recommendedPrice = ref(null)
+const recommendedPrices = ref<Record<string, number | null>>({})
 const submitAttempted = ref<boolean>(false)
+const saving = ref<boolean>(false)
 // =============================================================================
 // Computed
 const selectedCategory = computed(() =>
@@ -61,52 +66,18 @@ const selectedCategory = computed(() =>
 
 const taxOptions = computed(() => taxes.value.map((t) => ({ ...t, label: `${t.rate} %` })))
 
-const pvcSourcesFilledCount = computed(
-  () =>
-    [selectedCategoryId.value, form.value.total_cost, form.value.tax_rate].filter((v) => v != null)
-      .length,
+const canComputePvc = computed(() =>
+  [selectedCategoryId.value, form.value.total_cost, form.value.tax_rate].every((v) => v != null),
 )
-
-const pvcSourcesIncomplete = computed(
-  () => pvcSourcesFilledCount.value > 0 && pvcSourcesFilledCount.value < 3,
-)
-
-const priceDiff = computed(() => {
-  if (!form.value.price || !recommendedPrice.value) return 0
-  return form.value.price - recommendedPrice.value
-})
-
-const priceColorClass = computed(() => {
-  if (priceDiff.value < 0) return 'text-red-700!'
-  if (priceDiff.value > 0) return 'text-green-700!'
-  return ''
-})
-
-const taxFactor = computed(() => {
-  const { tax_rate } = form.value
-  if (tax_rate == null) return null
-  return 1 + tax_rate / 100
-})
-
-const marginAmount = computed(() => {
-  const { total_cost, price } = form.value
-  if (total_cost == null || price == null || taxFactor.value == null) return null
-  return price / taxFactor.value - total_cost
-})
-
-const marginRate = computed(() => {
-  const { price } = form.value
-  if (marginAmount.value == null || !price || taxFactor.value == null) return null
-  return (marginAmount.value / (price / taxFactor.value)) * 100
-})
 
 const isFormValid = computed(() => {
+  const allPricesSet = stores.value.every((store) => form.value.prices[store.id])
   return (
     !!form.value.name &&
     !!selectedCategoryId.value &&
     !!form.value.total_cost &&
     !!form.value.tax_rate &&
-    !!form.value.price
+    allPricesSet
   )
 })
 // =============================================================================
@@ -114,19 +85,57 @@ const isFormValid = computed(() => {
 const show = (field: keyof CategoryFields) => selectedCategory.value?.fields?.[field] === true
 
 const resetPrices = () => {
-  recommendedPrice.value = null
-  form.value.price = null
+  recommendedPrices.value = {}
+  form.value.prices = {}
 }
 
-const fetchRecommendedPrice = async () => {
-  const response = await api.post('/pricing/recommended-price', {
-    store_id: stores.value[0]!.id,
-    category_id: selectedCategoryId.value,
-    total_cost: form.value.total_cost,
-    tax_rate: form.value.tax_rate,
+const fetchRecommendedPrices = async () => {
+  const responses = await Promise.all(
+    stores.value.map(async (store) => {
+      const response = await api.post('/pricing/recommended-price', {
+        store_id: store.id,
+        category_id: selectedCategoryId.value,
+        total_cost: form.value.total_cost,
+        tax_rate: form.value.tax_rate,
+      })
+      return [store.id, response.data.recommended_price]
+    }),
+  )
+
+  const prices = Object.fromEntries(responses)
+  recommendedPrices.value = { ...prices }
+  form.value.prices = { ...prices }
+}
+
+const marginAmount = (storeId: string) => {
+  return getMarginAmount({
+    price: form.value.prices[storeId] ?? null,
+    totalCost: form.value.total_cost,
+    taxRate: form.value.tax_rate,
   })
-  recommendedPrice.value = response.data.recommended_price
-  form.value.price = response.data.recommended_price
+}
+
+const marginRate = (storeId: string) => {
+  return getMarginRate({
+    price: form.value.prices[storeId] ?? null,
+    totalCost: form.value.total_cost,
+    taxRate: form.value.tax_rate,
+  })
+}
+
+const getPriceDiff = (storeId: string) => {
+  const recommendedPrice = recommendedPrices.value[storeId]
+  const price = form.value.prices[storeId]
+
+  if (!price || !recommendedPrice) return 0
+  return price - recommendedPrice
+}
+
+const priceColorClass = (storeId: string) => {
+  const priceDiff = getPriceDiff(storeId)
+  if (priceDiff < 0) return 'text-red-700!'
+  if (priceDiff > 0) return 'text-green-700!'
+  return ''
 }
 
 const closeDialog = () => {
@@ -137,7 +146,7 @@ const resetForm = () => {
   form.value = structuredClone(INITIAL_FORM)
   selectedCategoryId.value = null
   submitAttempted.value = false
-  recommendedPrice.value = null
+  recommendedPrices.value = {}
 }
 
 const buildDetails = () => {
@@ -166,22 +175,30 @@ const submitArticle = async () => {
   submitAttempted.value = true
   if (!isFormValid.value) return
 
-  await api.post('/articles', {
-    ...form.value,
-    category: selectedCategory.value?.name,
-    details: buildDetails(),
-  })
-
-  emit('created')
+  saving.value = true
+  try {
+    await api.post('/articles', {
+      ...form.value,
+      category: selectedCategory.value?.name,
+      details: buildDetails(),
+    })
+    toast.add({ severity: 'success', summary: 'Article créé', detail: form.value.name, life: 5000 })
+    emit('created')
+  } catch (e) {
+    console.error(e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'La création a échoué', life: 5000 })
+  } finally {
+    saving.value = false
+  }
 }
 // =============================================================================
 // Watchers
 watch([selectedCategoryId, () => form.value.total_cost, () => form.value.tax_rate], () => {
-  if (pvcSourcesFilledCount.value < 3) {
+  if (!canComputePvc.value) {
     resetPrices()
     return
   }
-  fetchRecommendedPrice()
+  fetchRecommendedPrices()
 })
 // =============================================================================
 </script>
@@ -189,6 +206,8 @@ watch([selectedCategoryId, () => form.value.total_cost, () => form.value.tax_rat
 <template>
   <Dialog
     :visible="props.visible"
+    :closable="!saving"
+    :closeOnEscape="!saving"
     @update:visible="emit('update:visible', $event)"
     @after-hide="resetForm"
     position="top"
@@ -237,7 +256,7 @@ watch([selectedCategoryId, () => form.value.total_cost, () => form.value.tax_rat
           <!-- Volume -->
           <div v-if="show('volume')" class="flex gap-1">
             <FloatLabel variant="on" class="flex-1">
-              <InputNumber id="volume-value" v-model="form.details.volume.value" fluid />
+              <InputNumber inputId="volume-value" v-model="form.details.volume.value" fluid />
               <label for="volume-value">Volume</label>
             </FloatLabel>
             <Select
@@ -253,7 +272,7 @@ watch([selectedCategoryId, () => form.value.total_cost, () => form.value.tax_rat
           </div>
           <FloatLabel v-if="show('alcohol_by_volume')" variant="on">
             <InputNumber
-              id="alcohol_by_volume"
+              inputId="alcohol_by_volume"
               v-model="form.details.alcohol_by_volume"
               :min="0"
               :max="100"
@@ -319,25 +338,32 @@ watch([selectedCategoryId, () => form.value.total_cost, () => form.value.tax_rat
               />
               <label for="tax_rate">TVA</label>
             </FloatLabel>
-            <FloatLabel variant="on">
+          </div>
+
+          <!-- One row per store: the v-for div is "contents" so its cells sit in the grid -->
+          <div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr] items-center gap-x-3 gap-y-2 mt-3">
+            <span class="text-sm text-slate-500">Magasin</span>
+            <span class="text-sm text-slate-500">PVC</span>
+            <span class="text-sm text-slate-500">Prix TTC</span>
+            <span class="text-sm text-slate-500">Marge</span>
+            <span class="text-sm text-slate-500">Taux</span>
+
+            <div v-for="store in stores" :key="store.id" class="contents">
+              <span class="font-medium">{{ store.name }}</span>
               <InputNumber
-                id="recommended_price"
-                v-model="recommendedPrice"
+                :modelValue="recommendedPrices[store.id]"
+                :aria-label="`PVC ${store.name}`"
                 mode="currency"
                 currency="EUR"
                 locale="fr-FR"
-                :invalid="pvcSourcesIncomplete"
                 disabled
                 fluid
               />
-              <label for="recommended_price">PVC</label>
-            </FloatLabel>
-            <FloatLabel variant="on">
               <InputNumber
-                id="price"
-                v-model="form.price"
-                :inputClass="priceColorClass"
-                :invalid="submitAttempted && !form.price"
+                v-model="form.prices[store.id]"
+                :aria-label="`Prix TTC ${store.name}`"
+                :inputClass="priceColorClass(store.id)"
+                :invalid="submitAttempted && !form.prices[store.id]"
                 mode="currency"
                 currency="EUR"
                 locale="fr-FR"
@@ -345,31 +371,24 @@ watch([selectedCategoryId, () => form.value.total_cost, () => form.value.tax_rat
                 :step="0.1"
                 fluid
               />
-              <label for="price">Prix TTC</label>
-            </FloatLabel>
-            <FloatLabel variant="on">
               <InputNumber
-                id="margin-amount"
-                v-model="marginAmount"
+                :modelValue="marginAmount(store.id)"
+                :aria-label="`Marge ${store.name}`"
                 mode="currency"
                 currency="EUR"
                 locale="fr-FR"
-                fluid
                 disabled
+                fluid
               />
-              <label for="margin-amount">Marge</label>
-            </FloatLabel>
-            <FloatLabel variant="on">
               <InputNumber
-                id="margin-rate"
-                v-model="marginRate"
+                :modelValue="marginRate(store.id)"
+                :aria-label="`Taux ${store.name}`"
                 :maxFractionDigits="1"
                 suffix=" %"
-                fluid
                 disabled
+                fluid
               />
-              <label for="margin-rate">Taux</label>
-            </FloatLabel>
+            </div>
           </div>
         </div>
         <!-- --------------------------------------------------------------- -->
@@ -420,8 +439,8 @@ watch([selectedCategoryId, () => form.value.total_cost, () => form.value.tax_rat
     </div>
 
     <template #footer>
-      <Button label="Annuler" severity="secondary" @click="closeDialog" />
-      <Button label="Créer" @click="submitArticle" />
+      <Button label="Annuler" severity="secondary" @click="closeDialog" :disabled="saving" />
+      <Button label="Créer" @click="submitArticle" :loading="saving" />
     </template>
   </Dialog>
 </template>
