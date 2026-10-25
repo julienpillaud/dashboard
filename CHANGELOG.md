@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/julienpillaud/dashboard/compare/0.12.0...0.13.0) (2026-10-25)
+
+
+### Features
+
+* add support for inventories ([#31](https://github.com/julienpillaud/dashboard/issues/31)) ([6f9656f](https://github.com/julienpillaud/dashboard/commit/6f9656f50bfeec991eaa3e23d9a4d3c6fc10c05f))
+
 ## [0.12.0](https://github.com/julienpillaud/dashboard/compare/0.11.0...0.12.0) (2026-10-04)
 
 
