@@ -9,11 +9,13 @@ import { createPinia } from 'pinia'
 import OpenVue from 'openvue/config'
 import { definePreset } from '@openvue/themes'
 import Aura from '@openvue/themes/aura'
+import ToastService from 'openvue/toastservice'
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+app.use(ToastService)
 
 const MyPreset = definePreset(Aura, {
   semantic: {

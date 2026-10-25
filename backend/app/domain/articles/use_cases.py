@@ -21,7 +21,7 @@ from app.domain.articles.entities import (
 )
 from app.domain.categories.entities import Category
 from app.domain.context import ContextProtocol
-from app.domain.exceptions import NotFoundError
+from app.domain.exceptions import NotFoundError, UnprocessableContentError
 from app.domain.logger import logger
 from app.domain.protocols import (
     POSError,
@@ -59,6 +59,11 @@ async def create_article(context: ContextProtocol, /, data: ArticleCreate) -> Ar
         raise NotFoundError(f"Tax {data.tax_rate} not found")
 
     stores = await get_stores(context)
+    missing_stores = [store.name for store in stores if store.id not in data.prices]
+    if missing_stores:
+        raise UnprocessableContentError(
+            f"Missing price for stores: {', '.join(missing_stores)}"
+        )
 
     current_time = datetime.datetime.now(datetime.UTC)
     article = Article(
@@ -80,14 +85,18 @@ async def create_article(context: ContextProtocol, /, data: ArticleCreate) -> Ar
                 store=store,
                 category=category,
                 tax=tax,
-                price=data.price,
+                price=data.prices[store.id],
                 article=article,
             )
             for store in stores
         )
     )
     for store, result in zip(stores, results, strict=True):
-        article.add_store_mapping(store=store, price=data.price, result=result)
+        article.add_store_mapping(
+            store=store,
+            price=data.prices[store.id],
+            result=result,
+        )
 
     await context.article_repository.save(article)
     return article

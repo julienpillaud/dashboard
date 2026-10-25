@@ -15,10 +15,10 @@ export const getTaxFactor = (taxRate: number | null): number | null => {
   return 1 + taxRate / 100
 }
 
-export const getMarginAmount = ({ price, totalCost, taxRate }: MarginInput): number | null => {
-  const factor = getTaxFactor(taxRate)
-  if (price == null || totalCost == null || factor == null) return null
-  return price / factor - totalCost
+export const getMarginAmount = (input: MarginInput): number | null => {
+  const factor = getTaxFactor(input.taxRate)
+  if (input.price == null || input.totalCost == null || factor == null) return null
+  return input.price / factor - input.totalCost
 }
 
 export const getMarginRate = (input: MarginInput): number | null => {

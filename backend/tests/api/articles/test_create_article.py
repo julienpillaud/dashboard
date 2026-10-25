@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -14,10 +16,13 @@ def test_create_article(factory: Factory, tokens: None, client: TestClient) -> N
         tax_rate=data.tax_rate,
         distributor=data.distributor,
         details=data.details,
-        price=1.7,
+        prices={
+            uuid.UUID(store_id): pos_article.price
+            for store_id, pos_article in data.store_mapping.items()
+        },
     )
 
-    response = client.post("/api/articles", json=article_create.model_dump())
+    response = client.post("/api/articles", json=article_create.model_dump(mode="json"))
 
     assert response.status_code == status.HTTP_201_CREATED
     result = response.json()

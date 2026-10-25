@@ -18,7 +18,7 @@ export interface ArticleForm {
   name: string | null
   total_cost: number | null
   tax_rate: number | null
-  price: number | null
+  prices: Record<string, number | null>
   distributor: string | null
   details: FormDetails
 }
