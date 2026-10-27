@@ -1,9 +1,9 @@
 import asyncio
 import datetime
 import uuid
-from decimal import Decimal
 
 from cleanstack import (
+    EntityId,
     FilterEntity,
     PaginatedResponse,
     Pagination,
@@ -13,22 +13,20 @@ from cleanstack import (
 
 from app.domain.articles.entities import (
     Article,
-    ArticleCreate,
+    ArticleInput,
     ArticleSynchronizationResult,
-    POSAPIResult,
-    POSStatus,
     RawArticle,
 )
-from app.domain.categories.entities import Category
-from app.domain.context import ContextProtocol
-from app.domain.exceptions import NotFoundError, UnprocessableContentError
-from app.domain.logger import logger
-from app.domain.protocols import (
-    POSError,
+from app.domain.articles.utils import (
+    create_pos_article,
+    fetch_pos_articles,
+    get_article_references,
+    update_pos_article,
 )
+from app.domain.context import ContextProtocol
+from app.domain.exceptions import NotFoundError
 from app.domain.stores.entities import Store
 from app.domain.stores.use_cases import get_stores
-from app.domain.taxes.entities import Tax
 
 
 async def get_articles(
@@ -49,21 +47,12 @@ async def get_articles(
     )
 
 
-async def create_article(context: ContextProtocol, /, data: ArticleCreate) -> Article:
-    category = await context.category_repository.get_by_name(name=data.category)
-    if not category:
-        raise NotFoundError(f"Category {data.category} not found")
-
-    tax = await context.tax_repository.get_by_rate(rate=data.tax_rate)
-    if not tax:
-        raise NotFoundError(f"Tax {data.tax_rate} not found")
-
-    stores = await get_stores(context)
-    missing_stores = [store.name for store in stores if store.id not in data.prices]
-    if missing_stores:
-        raise UnprocessableContentError(
-            f"Missing price for stores: {', '.join(missing_stores)}"
-        )
+async def create_article(
+    context: ContextProtocol,
+    /,
+    data: ArticleInput,
+) -> Article:
+    references = await get_article_references(context, data=data)
 
     current_time = datetime.datetime.now(datetime.UTC)
     article = Article(
@@ -78,20 +67,24 @@ async def create_article(context: ContextProtocol, /, data: ArticleCreate) -> Ar
         updated_at=current_time,
     )
 
+    # Create POS articles
     results = await asyncio.gather(
         *(
             create_pos_article(
                 context,
                 store=store,
-                category=category,
-                tax=tax,
+                category=references.category,
+                tax=references.tax,
+                name=article.name,
                 price=data.prices[store.id],
-                article=article,
+                reference=article.id.hex,
             )
-            for store in stores
+            for store in references.stores
         )
     )
-    for store, result in zip(stores, results, strict=True):
+
+    # Fill article with POS results
+    for store, result in zip(references.stores, results, strict=True):
         article.add_store_mapping(
             store=store,
             price=data.prices[store.id],
@@ -102,30 +95,61 @@ async def create_article(context: ContextProtocol, /, data: ArticleCreate) -> Ar
     return article
 
 
-async def create_pos_article(
+async def update_article(
     context: ContextProtocol,
     /,
-    store: Store,
-    category: Category,
-    tax: Tax,
-    price: Decimal,
-    article: Article,
-) -> POSAPIResult[RawArticle]:
-    manager = await context.get_pos_manager(store)
-    category_id = category.store_mapping[str(store.id)].id
-    tax_id = tax.store_mapping[str(store.id)].id
+    article_id: EntityId,
+    data: ArticleInput,
+) -> Article:
+    article = await context.article_repository.get_by_id(article_id)
+    if not article:
+        raise NotFoundError(f"Article '{article_id}' not found")
 
-    try:
-        raw_article = await manager.create_article(
-            category_id=category_id,
-            tax_id=tax_id,
-            price=price,
-            article=article,
+    references = await get_article_references(context, data=data)
+    has_pos_changes = article.has_pos_changes(data)
+
+    # Only call the POS for stores that need it
+    # Stores where the creation failed (no raw) are skipped:
+    # retrying the creation is not handled here
+    targets: list[tuple[Store, RawArticle]] = []
+    for store in references.stores:
+        pos_article = article.store_mapping[str(store.id)]
+        if pos_article.raw and pos_article.needs_update(
+            price=data.prices[store.id],
+            has_pos_changes=has_pos_changes,
+        ):
+            targets.append((store, pos_article.raw))
+
+    # Update POS articles
+    results = await asyncio.gather(
+        *(
+            update_pos_article(
+                context,
+                article_id=raw_article.id,
+                store=store,
+                category=references.category,
+                tax=references.tax,
+                name=data.name,
+                price=data.prices[store.id],
+                reference=article.id.hex,
+            )
+            for store, raw_article in targets
         )
-    except POSError as error:
-        return POSAPIResult(status=POSStatus.FAILED, data=None, error=str(error))
+    )
 
-    return POSAPIResult(status=POSStatus.CREATED, data=raw_article, error=None)
+    # Update article in DB
+    article.apply_input(data=data, current_time=datetime.datetime.now(datetime.UTC))
+
+    # Fill article with POS results
+    for (store, _), result in zip(targets, results, strict=True):
+        article.update_store_mapping(
+            store=store,
+            price=data.prices[store.id],
+            result=result,
+        )
+
+    await context.article_repository.update(article)
+    return article
 
 
 async def synchronize_articles(
@@ -164,7 +188,7 @@ async def synchronize_articles(
                 updated_raws[store_id] = raw
 
         if updated_raws:
-            article.update_store_mapping(updated_raws)
+            article.synchronize_store_mapping(updated_raws)
             updated_articles.append(article)
 
     await context.article_repository.update_many(updated_articles)
@@ -172,16 +196,3 @@ async def synchronize_articles(
         updated=len(updated_articles),
         failed_stores=failed_stores,
     )
-
-
-async def fetch_pos_articles(
-    context: ContextProtocol,
-    /,
-    store: Store,
-) -> list[RawArticle] | None:
-    manager = await context.get_pos_manager(store)
-    try:
-        return await manager.get_articles(limit=3000)
-    except POSError as error:
-        logger.warning(f"Failed to fetch articles for store {store.name}: {error}")
-        return None

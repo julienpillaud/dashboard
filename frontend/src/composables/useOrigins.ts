@@ -1,4 +1,5 @@
 import { onMounted, ref } from 'vue'
+
 import api from '@/services/api'
 
 export function useOrigins() {

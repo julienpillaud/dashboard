@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import axios from 'axios'
-import api from '@/services/api'
-import AppNav from '@/components/AppNav.vue'
-import DataTable from 'openvue/datatable'
-import Column from 'openvue/column'
 import Button from 'openvue/button'
-import Select from 'openvue/select'
+import Column from 'openvue/column'
+import DataTable from 'openvue/datatable'
 import Message from 'openvue/message'
 import ProgressSpinner from 'openvue/progressspinner'
-import type { Inventory } from '@/types/inventories'
+import Select from 'openvue/select'
+import { ref, watch } from 'vue'
+
+import AppNav from '@/components/AppNav.vue'
 import { useStores } from '@/composables/useStores'
+import api from '@/services/api'
+import type { Inventory } from '@/types/inventories'
 import { formatCurrency, formatDateTime } from '@/utils/format'
 // =============================================================================
 // State

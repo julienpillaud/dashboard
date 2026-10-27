@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import Button from 'openvue/button'
+import InputText from 'openvue/inputtext'
+import Message from 'openvue/message'
+import Password from 'openvue/password'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import InputText from 'openvue/inputtext'
-import Password from 'openvue/password'
-import Button from 'openvue/button'
-import Message from 'openvue/message'
+
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()

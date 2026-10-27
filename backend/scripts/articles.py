@@ -157,9 +157,8 @@ def build_articles(
             str(result.store.id): PosArticle(
                 store_name=result.store.name,
                 price=result.raw_article.full_price or 0,
-                status=POSStatus.CREATED,
+                status=POSStatus.SYNCED,
                 raw=result.raw_article,
-                error=None,
             )
             for result in results
         }

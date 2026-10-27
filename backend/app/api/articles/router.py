@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from cleanstack import FilterEntity, PaginatedResponse, Pagination
+from cleanstack import EntityId, FilterEntity, PaginatedResponse, Pagination
 from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies.app import QueryDomain
@@ -9,13 +9,14 @@ from app.api.filters import get_filters
 from app.api.search import get_search
 from app.domain.articles.entities import (
     Article,
-    ArticleCreate,
+    ArticleInput,
     ArticleSynchronizationResult,
 )
 from app.domain.articles.use_cases import (
     create_article,
     get_articles,
     synchronize_articles,
+    update_article,
 )
 
 router = APIRouter(
@@ -43,9 +44,18 @@ async def get_articles_endpoint(
 @router.post("", status_code=status.HTTP_201_CREATED, summary="Create article")
 async def create_article_endpoint(
     domain: QueryDomain,
-    data: ArticleCreate,
+    data: ArticleInput,
 ) -> Article:
     return await domain.run(create_article, data=data)
+
+
+@router.put("/{article_id}", summary="Update article")
+async def update_article_endpoint(
+    domain: QueryDomain,
+    article_id: EntityId,
+    data: ArticleInput,
+) -> Article:
+    return await domain.run(update_article, article_id=article_id, data=data)
 
 
 @router.post("/synchronize", summary="Synchronize articles")
