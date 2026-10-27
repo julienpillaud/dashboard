@@ -1,25 +1,25 @@
 <script setup lang="ts">
+import Button from 'openvue/button'
+import Column from 'openvue/column'
+import DataTable, { type DataTablePageEvent, type DataTableRowClickEvent } from 'openvue/datatable'
+import IconField from 'openvue/iconfield'
+import InputIcon from 'openvue/inputicon'
+import InputText from 'openvue/inputtext'
+import Tag from 'openvue/tag'
+import { onMounted, ref } from 'vue'
+
+import AppNav from '@/components/AppNav.vue'
+import ArticleFormDialog from '@/components/ArticleFormDialog.vue'
+import api from '@/services/api'
+import type { Article } from '@/types/articles'
+import { getColorStyle } from '@/utils/colors'
+import { formatNumber, formatPercent, formatCurrency, formatVolume } from '@/utils/format'
 import {
   getMarginAmount,
   getMarginRate,
   getMarginAmountSeverity,
   getMarginRateSeverity,
 } from '@/utils/margins'
-import { onMounted, ref } from 'vue'
-import api from '@/services/api'
-import DataTable from 'openvue/datatable'
-import Column from 'openvue/column'
-import Button from 'openvue/button'
-import AppNav from '@/components/AppNav.vue'
-import ArticleFormDialog from '@/components/ArticleFormDialog.vue'
-import type { DataTablePageEvent } from 'openvue/datatable'
-import type { Article } from '@/types/articles'
-import IconField from 'openvue/iconfield'
-import InputIcon from 'openvue/inputicon'
-import InputText from 'openvue/inputtext'
-import Tag from 'openvue/tag'
-import { formatNumber, formatPercent, formatCurrency, formatVolume } from '@/utils/format'
-import { getColorStyle } from '@/utils/colors'
 // =============================================================================
 // State
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
@@ -31,6 +31,8 @@ const total = ref()
 const dialogVisible = ref(false)
 const search = ref('')
 const first = ref(0)
+
+const selectedArticle = ref<Article | null>(null)
 // =============================================================================
 // Functions
 const fetchArticles = async (page = 0) => {
@@ -68,7 +70,7 @@ const onPageChange = async (event: DataTablePageEvent): Promise<void> => {
   fetchArticles(event.page)
 }
 
-const onArticleCreated = () => {
+const onArticleSaved = () => {
   dialogVisible.value = false
   fetchArticles()
 }
@@ -87,6 +89,16 @@ const mappingToRows = (parent: Article) =>
       marginRate: getMarginRate(input),
     }
   })
+
+const onRowClick = (event: DataTableRowClickEvent) => {
+  selectedArticle.value = event.data
+  dialogVisible.value = true
+}
+
+const openCreateDialog = () => {
+  selectedArticle.value = null
+  dialogVisible.value = true
+}
 // =============================================================================
 // Lifecycle
 onMounted(async () => {
@@ -110,7 +122,7 @@ onMounted(async () => {
         </IconField>
       </template>
       <template #actions>
-        <Button label="Nouveau" @click="dialogVisible = true" />
+        <Button label="Nouveau" @click="openCreateDialog" />
       </template>
     </AppNav>
 
@@ -129,6 +141,9 @@ onMounted(async () => {
         :first="first"
         :totalRecords="total"
         @page="onPageChange"
+        @row-click="onRowClick"
+        rowHover
+        :rowClass="() => 'cursor-pointer'"
         scrollable
         scrollHeight="flex"
         class="h-full"
@@ -243,6 +258,10 @@ onMounted(async () => {
       </DataTable>
     </main>
 
-    <ArticleFormDialog v-model:visible="dialogVisible" @created="onArticleCreated" />
+    <ArticleFormDialog
+      v-model:visible="dialogVisible"
+      :article="selectedArticle"
+      @saved="onArticleSaved"
+    />
   </div>
 </template>

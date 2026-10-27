@@ -1,11 +1,17 @@
 from decimal import Decimal
 
-from tactill import ArticleCreate, AsyncTactillClient, FilterEntity, TactillColor
+from tactill import (
+    ArticleCreate,
+    ArticleUpdate,
+    AsyncTactillClient,
+    FilterEntity,
+    TactillColor,
+)
 from tactill.exceptions import (
     TactillError,
 )
 
-from app.domain.articles.entities import Article, RawArticle
+from app.domain.articles.entities import RawArticle
 from app.domain.categories.entities import RawCategory
 from app.domain.protocols import (
     POSError,
@@ -63,20 +69,49 @@ class TactillManager(POSManagerProtocol):
         self,
         category_id: str,
         tax_id: str,
+        name: str,
         price: Decimal,
-        article: Article,
+        reference: str,
     ) -> RawArticle:
         article_create = ArticleCreate(
             category_id=category_id,
             taxes=[tax_id],
-            name=article.name,
+            name=name,
             icon_text="    ",
             color=TactillColor.GREEN,
             full_price=price,
-            reference=article.id.hex,
+            reference=reference,
         )
         try:
             result = await self.client.articles.create(data=article_create)
+        except TactillError as error:
+            raise POSError(str(error)) from error
+
+        return RawArticle.model_validate(result.model_dump())
+
+    async def update_article(
+        self,
+        article_id: str,
+        category_id: str,
+        tax_id: str,
+        name: str,
+        price: Decimal,
+        reference: str,
+    ) -> RawArticle:
+        article_update = ArticleUpdate(
+            category_id=category_id,
+            taxes=[tax_id],
+            name=name,
+            color=TactillColor.GREEN,
+            full_price=price,
+            reference=reference,
+        )
+        try:
+            await self.client.articles.update(
+                article_id=article_id,
+                data=article_update,
+            )
+            result = await self.client.articles.get(article_id=article_id)
         except TactillError as error:
             raise POSError(str(error)) from error
 

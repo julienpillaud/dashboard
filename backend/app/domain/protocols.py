@@ -2,7 +2,7 @@ from collections.abc import AsyncIterator
 from decimal import Decimal
 from typing import Protocol
 
-from app.domain.articles.entities import Article, RawArticle
+from app.domain.articles.entities import RawArticle
 from app.domain.categories.entities import RawCategory
 from app.domain.taxes.entities import RawTax
 
@@ -46,8 +46,19 @@ class POSManagerProtocol(Protocol):
         self,
         category_id: str,
         tax_id: str,
+        name: str,
         price: Decimal,
-        article: Article,
+        reference: str,
+    ) -> RawArticle: ...
+
+    async def update_article(
+        self,
+        article_id: str,
+        category_id: str,
+        tax_id: str,
+        name: str,
+        price: Decimal,
+        reference: str,
     ) -> RawArticle: ...
 
 

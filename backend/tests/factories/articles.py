@@ -1,4 +1,3 @@
-import random
 import uuid
 from typing import Any
 
@@ -135,6 +134,7 @@ def generate_article(
     category: Category,
     **kwargs: Any,  # noqa: ANN401
 ) -> Article:
+    status = kwargs.get("status", POSStatus.SYNCED)
     return Article(
         id=uuid.uuid7(),
         name=kwargs.get("name", faker.word()),
@@ -155,9 +155,13 @@ def generate_article(
                 price=kwargs.get(
                     "price", faker.pydecimal(right_digits=2, positive=True)
                 ),
-                status=kwargs.get("status", random.choice(list(POSStatus))),
-                raw=generate_raw_article(**kwargs),
-                error=kwargs.get("error", faker.text() if faker.boolean() else None),
+                status=status,
+                # A POS article that was not created has no raw
+                raw=(
+                    None
+                    if status == POSStatus.NOT_CREATED
+                    else generate_raw_article(**kwargs)
+                ),
             )
             for store in stores
         },

@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from cleanstack import (
+    EntityId,
     FilterEntity,
     FilterOperator,
     PaginatedResponse,
@@ -129,8 +130,14 @@ class ArticleRepository(ArticleRepositoryProtocol):
             pagination=pagination,
         )
 
+    async def get_by_id(self, entity_id: EntityId, /) -> Article | None:
+        return await self.repository.get_by_id(entity_id)
+
     async def save(self, entity: Article) -> None:
         await self.repository.save(entity)
+
+    async def update(self, entity: Article) -> None:
+        await self.repository.update(entity)
 
     async def count(self, filters: list[FilterEntity] | None = None) -> int:
         count_pipeline = [*self.repository.filters_stage(filters), {"$count": "total"}]

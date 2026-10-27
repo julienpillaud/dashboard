@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from cleanstack import FilterEntity, PaginatedResponse, Pagination, SortEntity
+from cleanstack import EntityId, FilterEntity, PaginatedResponse, Pagination, SortEntity
 
 from app.domain.articles.entities import Article
 
@@ -14,7 +14,11 @@ class ArticleRepositoryProtocol(Protocol):
         pagination: Pagination | None = None,
     ) -> PaginatedResponse[Article]: ...
 
+    async def get_by_id(self, entity_id: EntityId, /) -> Article | None: ...
+
     async def save(self, entity: Article) -> None: ...
+
+    async def update(self, entity: Article) -> None: ...
 
     async def count(self, filters: list[FilterEntity] | None = None) -> int: ...
 

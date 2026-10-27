@@ -1,5 +1,7 @@
+import type { ArticleOrigin } from '@/types/articles'
+
 export interface FormDetails {
-  origin: string | null
+  origin: ArticleOrigin | null
   color: string | null
   taste: string | null
   volume: {
@@ -15,6 +17,7 @@ export interface FormDetails {
 }
 
 export interface ArticleForm {
+  category: string | null
   name: string | null
   total_cost: number | null
   tax_rate: number | null

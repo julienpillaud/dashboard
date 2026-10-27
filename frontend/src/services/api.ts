@@ -1,5 +1,6 @@
 // services/api.ts
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
 
