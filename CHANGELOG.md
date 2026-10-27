@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/julienpillaud/dashboard/compare/0.14.0...0.15.0) (2026-10-27)
+
+
+### Features
+
+* add support for article update ([#35](https://github.com/julienpillaud/dashboard/issues/35)) ([e62145f](https://github.com/julienpillaud/dashboard/commit/e62145ffc5785da575f1b404c4d62efcf7fe028a))
+
 ## [0.14.0](https://github.com/julienpillaud/dashboard/compare/0.13.0...0.14.0) (2026-10-25)
 
 
